@@ -1,0 +1,672 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{% static 'favicon.png' %}">
+    <title>Study Plan — StudySuite AI</title>
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else { document.documentElement.classList.remove('dark'); }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { fontFamily: { sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'], display: ['Syne', 'sans-serif'] } } }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #f8fafc; }
+        .dark body { background-color: #090d16; }
+        .grid-pattern {
+            background-image: linear-gradient(rgba(99,102,241,0.02) 1px,transparent 1px), linear-gradient(90deg,rgba(99,102,241,0.02) 1px,transparent 1px);
+            background-size: 48px 48px;
+        }
+        .dark .grid-pattern {
+            background-image: linear-gradient(rgba(99,102,241,0.04) 1px,transparent 1px), linear-gradient(90deg,rgba(99,102,241,0.04) 1px,transparent 1px);
+        }
+        .dark .shine-card { border-top:1.5px solid rgba(255,255,255,0.65)!important; border-bottom:1.5px solid rgba(255,255,255,0.65)!important; box-shadow:0 10px 30px -10px rgba(0,0,0,0.7); }
+        .shine-card { border-top:1.5px solid rgba(0,0,0,0.75)!important; border-bottom:1.5px solid rgba(0,0,0,0.75)!important; box-shadow:0 10px 30px -10px rgba(0,0,0,0.15); }
+        .dark .shine-header { border-bottom:1.5px solid rgba(255,255,255,0.65)!important; }
+        .shine-header { border-bottom:1.5px solid rgba(0,0,0,0.75)!important; }
+        .dark .shine-footer { border-top:1.5px solid rgba(255,255,255,0.65)!important; }
+        .shine-footer { border-top:1.5px solid rgba(0,0,0,0.75)!important; }
+
+        .day-card { transition: all 0.2s ease; }
+
+        .priority-high   { background: rgba(239,68,68,0.1);  border-color: rgba(239,68,68,0.3);  color: #ef4444; }
+        .priority-medium { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); color: #f59e0b; }
+        .priority-low    { background: rgba(34,197,94,0.1);  border-color: rgba(34,197,94,0.3);  color: #22c55e; }
+
+        .diff-hard   { color: #f87171; }
+        .diff-medium { color: #fbbf24; }
+        .diff-easy   { color: #4ade80; }
+
+        @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        .fade-up { animation: fadeUp 0.4s ease both; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 3px; }
+    </style>
+</head>
+<body class="font-sans text-neutral-600 dark:text-slate-400 antialiased min-h-screen grid-pattern transition-colors duration-300 capitalize">
+
+    <header class="sticky top-0 z-50 shine-header bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
+    <div class="w-full px-4 sm:px-6 md:px-10 py-3 md:h-16 flex flex-col md:flex-row md:flex-nowrap justify-between items-center gap-3 md:gap-4">
+
+        <div class="flex items-center justify-between w-full md:w-auto flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4L2 9l10 5 10-5-10-5z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 11v4c0 2.5 3 4 6 4s6-1.5 6-4v-4"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20 9v7"/>
+                    </svg>
+                </div>
+                <span class="font-display text-lg font-bold tracking-tight text-slate-900 dark:text-white">StudySuite<span class="text-blue-600 dark:text-blue-400">AI</span></span>
+            </div>
+
+            <!-- Mobile Theme Toggle (Exact Laptop Design) -->
+<div class="flex md:hidden items-center gap-2 flex-shrink-0">
+    <button onclick="toggleTheme()" type="button"
+            class="relative inline-flex h-9 w-16 items-center justify-between rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-1 cursor-pointer transition-all duration-300 shadow-inner group focus:outline-none"
+            aria-label="Toggle Theme">
+        <span class="absolute top-[3px] left-[3px] h-[28px] w-[28px] rounded-full bg-white dark:bg-blue-600 shadow-md transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform translate-x-0 dark:translate-x-7"></span>
+        <span class="z-10 flex items-center justify-center w-7 h-7 text-amber-500 dark:text-slate-500 transition-colors duration-300">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.243 17.657l.707.707M6.343 4.343l.707.707M12 7a5 5 0 100 10 5 5 0 000-10z"/></svg>
+        </span>
+        <span class="z-10 flex items-center justify-center w-7 h-7 text-slate-400 dark:text-blue-100 transition-colors duration-300">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </span>
+    </button>
+</div>
+        </div>
+
+        <div class="flex items-center gap-2.5 w-full md:w-auto justify-center md:justify-end my-1 md:my-0 px-2 flex-wrap sm:flex-nowrap">
+            <button onclick="openDateModal()"
+                    class="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-bold bg-neutral-950 text-white border border-blue-500/40 dark:bg-blue-600 dark:border-blue-400 transition-all shadow-sm flex-shrink-0 whitespace-nowrap">
+                <svg class="w-3.5 h-3.5 text-white hidden md:block" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                                                   d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span>Change Date</span>
+            </button>
+
+            <button onclick="openDeleteModal()" class="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-bold bg-red-600 text-white transition-all shadow-sm flex-shrink-0 whitespace-nowrap">
+                <svg class="w-3.5 h-3.5 text-white hidden md:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                                                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                <span>Delete Plan</span>
+            </button>
+
+            <a href="/study-planner/"
+               class="inline-flex items-center justify-center h-9 px-4 rounded-lg font-bold text-sm bg-neutral-950 text-white border border-blue-500/40 dark:bg-blue-600 dark:border-blue-400 transition-all shadow-sm whitespace-nowrap leading-none">
+                + New Plan
+            </a>
+
+            <!-- Desktop Theme Toggle -->
+            <div class="hidden md:flex items-center gap-3 ml-2">
+                <button onclick="toggleTheme()" type="button"
+                        class="relative inline-flex h-9 w-16 items-center justify-between rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-1 cursor-pointer transition-all duration-300 shadow-inner group focus:outline-none"
+                        aria-label="Toggle Theme">
+                    <span class="absolute top-[3px] left-[3px] h-[28px] w-[28px] rounded-full bg-white dark:bg-blue-600 shadow-md transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform translate-x-0 dark:translate-x-7"></span>
+                    <span class="z-10 flex items-center justify-center w-7 h-7 text-amber-500 dark:text-slate-500 transition-colors duration-300">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.243 17.657l.707.707M6.343 4.343l.707.707M12 7a5 5 0 100 10 5 5 0 000-10z"/></svg>
+                    </span>
+                    <span class="z-10 flex items-center justify-center w-7 h-7 text-slate-400 dark:text-blue-100 transition-colors duration-300">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                          d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+</header>
+
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-12">
+
+        <div class="mb-10 fade-up">
+            <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-widest text-indigo-500 dark:text-indigo-400 mb-2">AI Study Plan</p>
+                    <h1 class="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
+                        {{ plan.plan_title }}
+                    </h1>
+                    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                        Exam: <span class="font-semibold text-slate-700 dark:text-slate-300">{{ plan.exam_date|date:"d M Y" }}</span>
+                        &nbsp;·&nbsp;
+                        {% if days_left > 0 %}
+                            <span data-days-left class="text-amber-500 font-semibold">{{ days_left }} days left</span>
+                        {% else %}
+                            <span class="text-red-500 font-semibold">Exam day!</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="flex gap-2 flex-wrap">
+                    <span class="px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold bg-indigo-600 text-white dark:bg-indigo-600 dark:text-white uppercase tracking-wide">
+                        {{ plan.exam_format|upper }}
+                    </span>
+                    <span class="px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold bg-emerald-600 text-white dark:bg-emerald-600 dark:text-white uppercase tracking-wide">
+                        {{ plan.target_score|upper }}
+                    </span>
+                    <span class="px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold bg-slate-700 text-white dark:bg-slate-800 dark:text-white uppercase tracking-wide">
+                        {{ plan.total_marks }} Marks
+                    </span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="shine-card bg-white dark:bg-slate-900/40 rounded-2xl p-4 text-center">
+                    <p class="text-xl sm:text-2xl font-display font-black text-indigo-600 dark:text-indigo-400">{{ plan.total_days }}</p>
+                    <p class="text-[10px] sm:text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wide">Total Days</p>
+                </div>
+                <div class="shine-card bg-white dark:bg-slate-900/40 rounded-2xl p-4 text-center">
+                    <p class="text-xl sm:text-2xl font-display font-black text-cyan-600 dark:text-cyan-400">{{ plan.total_hours|floatformat:0 }}h</p>
+                    <p class="text-[10px] sm:text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wide">Study Hours</p>
+                </div>
+                <div class="shine-card bg-white dark:bg-slate-900/40 rounded-2xl p-4 text-center">
+                    <p class="text-xl sm:text-2xl font-display font-black text-emerald-600 dark:text-emerald-400">{{ study_days_count }}</p>
+                    <p class="text-[10px] sm:text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wide">Study Days</p>
+                </div>
+                <div class="shine-card bg-white dark:bg-slate-900/40 rounded-2xl p-4 text-center">
+                    <p class="text-xl sm:text-2xl font-display font-black text-rose-500 dark:text-rose-400">{{ plan.daily_hours }}h</p>
+                    <p class="text-[10px] sm:text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wide">Per Day</p>
+                </div>
+            </div>
+        </div>
+
+        {% if plan.strategy_note %}
+        <div class="shine-card bg-white dark:bg-slate-900/40 rounded-2xl p-4 sm:p-5 mb-6 border-l-4 border-l-indigo-500 fade-up">
+            <div class="flex items-start gap-3">
+                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                                   d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m1.636-6.364l.707.707M12 21v-1M6.343 17.657l-.707-.707M17.657 17.657l.707-.707M13 10a1 1 0 11-2 0 1 1 0 012 0z"/></svg>
+                </div>
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-1">AI Strategy Note</p>
+                    <p class="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{{ plan.strategy_note }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="shine-card bg-white dark:bg-slate-900/40 rounded-2xl overflow-hidden mb-6 fade-up">
+            <div class="flex border-b border-slate-100 dark:border-slate-800/60 p-1.5 bg-slate-50 dark:bg-slate-950/40 gap-1 overflow-x-auto sm:overflow-x-visible scrollbar-none">
+                <!-- Tab Buttons: SVGs hidden on mobile/tablet -->
+                <button onclick="switchTab('schedule')" id="tab-schedule"
+                        class="tab-btn flex-1 min-w-[100px] h-9 px-4 rounded-lg text-sm font-bold transition-all bg-neutral-950 text-white dark:bg-blue-600 dark:text-white flex items-center justify-center gap-1.5 whitespace-nowrap">
+                    <svg class="w-3.5 h-3.5 hidden md:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    Daily Schedule
+                </button>
+                <button onclick="switchTab('weekly')" id="tab-weekly"
+                        class="tab-btn flex-1 min-w-[100px] h-9 px-4 rounded-lg text-sm font-bold transition-all text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1.5 whitespace-nowrap">
+                    <svg class="w-3.5 h-3.5 hidden md:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    Weekly Overview
+                </button>
+                <button onclick="switchTab('tips')" id="tab-tips"
+                        class="tab-btn flex-1 min-w-[90px] h-9 px-4 rounded-lg text-sm font-bold transition-all text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1.5 whitespace-nowrap">
+                    <svg class="w-3.5 h-3.5 hidden md:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Tips & Topics
+                </button>
+            </div>
+
+            <div class="p-4 sm:p-5">
+
+                <div id="content-schedule" class="tab-content active space-y-3">
+                    {% for day in days %}
+                    <div class="day-card rounded-xl border {% if day.is_rest_day %}bg-slate-50 dark:bg-slate-800/20 border-slate-200 dark:border-slate-700{% else %}bg-white dark:bg-slate-900/30 border-slate-100 dark:border-slate-800/40{% endif %} overflow-hidden">
+                        <button onclick="toggleDay({{ day.day_number }})" class="w-full flex items-center justify-between px-3 sm:px-4 py-3 text-left group">
+                            <div class="flex items-center gap-3">
+                                <span class="w-8 h-8 rounded-lg {% if day.is_rest_day %}bg-neutral-500 text-white dark:bg-slate-600 dark:text-white{% else %}bg-indigo-600 text-white{% endif %} text-xs font-black flex items-center justify-center flex-shrink-0">
+                                    {{ day.day_number }}
+                                </span>
+                                <div>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300">{{ day.date_label }}</span>
+                                        {% if day.is_rest_day %}
+                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 uppercase tracking-wide">Rest Day</span>
+                                        {% else %}
+                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">{{ day.total_hours|floatformat:1 }}h</span>
+                                            <span class="text-[10px] text-slate-400">{{ day.topics.count }} topics</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if day.daily_goal and not day.is_rest_day %}
+                                    <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 normal-case">{{ day.daily_goal }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <svg id="chevron-{{ day.day_number }}" class="w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round"
+                                                                                                                                                                                                                               stroke-linejoin="round"
+                                                                                                                                                                                                                               d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+
+                        <div id="day-{{ day.day_number }}" class="hidden border-t border-slate-100 dark:border-slate-800/40">
+                            {% if day.is_rest_day %}
+                            <div class="px-4 py-3 flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                                <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                                                                 d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                                <span class="text-xs font-medium">Rest day — relax, light revision optional. You deserve it!</span>
+                            </div>
+                            {% else %}
+                            <div class="p-2 sm:p-3 space-y-2">
+                                {% for topic in day.topics.all %}
+                                <div class="flex items-start justify-between gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950/30">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="text-xs font-semibold text-slate-700 dark:text-slate-300 normal-case">{{ topic.topic }}</span>
+                                            <span class="priority-{{ topic.priority }} text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wide">{{ topic.priority }}</span>
+                                            <span class="diff-{{ topic.difficulty }} text-[10px] font-bold">● {{ topic.difficulty }}</span>
+                                        </div>
+                                        {% if topic.description %}
+                                        <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 normal-case">{{ topic.description }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <span class="text-[10px] font-bold bg-neutral-950 text-white dark:bg-blue-600 dark:text-white px-2 py-1 rounded-md flex-shrink-0 whitespace-nowrap align-middle">{{ topic.duration }}min</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-center text-slate-400 py-8 text-sm">No schedule generated.</p>
+                    {% endfor %}
+                </div>
+
+                <div id="content-weekly" class="tab-content space-y-3">
+                    {% for week in weeks %}
+                    <div class="shine-card bg-white dark:bg-slate-900/30 rounded-xl p-4">
+                        <div class="flex items-start justify-between gap-3 flex-wrap sm:flex-nowrap">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <span class="text-white font-display font-black text-sm">W{{ week.week_number }}</span>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-slate-800 dark:text-slate-200 normal-case">{{ week.focus_area }}</p>
+                                    <p class="text-[11px] text-slate-400 dark:text-slate-500 normal-case mt-0.5">🎯 {{ week.key_milestone }}</p>
+                                </div>
+                            </div>
+                            <span class="text-xs font-bold px-3 py-1.5 rounded-lg bg-cyan-600 text-white dark:bg-cyan-600 dark:text-white self-start sm:self-center">{{ week.total_hours|floatformat:1 }}h</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-center text-slate-400 py-8 text-sm">No weekly overview available.</p>
+                    {% endfor %}
+                </div>
+
+                <div id="content-tips" class="tab-content">
+                    <div class="grid sm:grid-cols-2 gap-5">
+                        <div>
+                            <h3 class="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-rose-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                                                              d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/></svg>
+                                Must-Cover Topics
+                            </h3>
+                            <div class="space-y-2">
+                                {% for topic in plan.important_topics %}
+                                <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/10">
+                                    <div class="w-5 h-5 bg-rose-500 rounded-md flex items-center justify-center flex-shrink-0">
+                                        <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd"
+                                                                                                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                                                                                      clip-rule="evenodd"/></svg>
+                                    </div>
+                                    <span class="text-xs font-semibold text-slate-700 dark:text-slate-300 normal-case">{{ topic }}</span>
+                                </div>
+                                {% empty %}
+                                <p class="text-xs text-slate-400">No topics listed.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                                                               d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m1.636-6.364l.707.707M12 21v-1M6.343 17.657l-.707-.707M17.657 17.657l.707-.707M13 10a1 1 0 11-2 0 1 1 0 012 0z"/></svg>
+                                Smart Revision Tips
+                            </h3>
+                            <div class="space-y-2">
+                                {% for tip in plan.revision_tips %}
+                                <div class="flex items-start gap-2.5 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/10">
+                                    <span class="text-amber-500 font-black text-sm flex-shrink-0 mt-0.5">{{ forloop.counter }}.</span>
+                                    <span class="text-xs font-medium text-slate-700 dark:text-slate-300 normal-case leading-relaxed">{{ tip }}</span>
+                                </div>
+                                {% empty %}
+                                <p class="text-xs text-slate-400">No tips available.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="flex flex-wrap sm:flex-nowrap gap-3 fade-up">
+            <!-- Bottom New Plan Button: SVG hidden on mobile/tablet -->
+            <a href="/study-planner/"
+               class="w-full sm:w-auto text-center flex items-center justify-center gap-2 h-9 px-4 text-sm font-bold bg-neutral-950 text-white border border-blue-500/40 dark:bg-blue-600 dark:border-blue-400 transition-all rounded-lg shadow-sm">
+                <svg class="w-4 h-4 text-white hidden md:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                New Plan
+            </a>
+            <!-- Bottom Download PDF Button: SVG hidden on mobile/tablet -->
+            <a href="/study-plan/{{ plan.id }}/pdf/"
+               class="w-full sm:w-auto text-center flex items-center justify-center gap-2 h-9 px-4 text-sm font-bold bg-neutral-950 text-white border border-blue-500/40 dark:bg-blue-600 dark:border-blue-400 transition-all rounded-lg shadow-sm">
+                <svg class="w-4 h-4 text-white hidden md:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                                             d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Download PDF
+            </a>
+        </div>
+
+    </main>
+
+    <footer class="shine-footer border-t border-slate-200/60 dark:border-slate-800/40 bg-white/60 dark:bg-slate-950/40 backdrop-blur-sm relative z-10">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 md:pt-16 pb-6 sm:pb-8">
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-5 sm:gap-8 pb-10 sm:pb-12 border-b border-slate-900/10 dark:border-white/10">
+
+                <div class="col-span-2 md:col-span-2">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center">
+                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4L2 9l10 5 10-5-10-5z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 11v4c0 2.5 3 4 6 4s6-1.5 6-4v-4"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20 9v7"/>
+                            </svg>
+                        </div>
+                        <span class="font-display font-bold text-base text-slate-900 dark:text-white tracking-tight">
+                            StudySuite<span class="text-indigo-600 dark:text-indigo-400">AI</span>
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm">
+                        Making exam preparation simple, fast, and 100% free. Create custom quizzes, practice sheets, and structured smart timetables in under 30 seconds.
+                    </p>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-4">AI Study Tools</h5>
+                    <ul class="space-y-2.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <li><a href="/quiz-generator/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Quiz Generator</a></li>
+                        <li><a href="{% url 'question_generator' %}" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Question Generator</a></li>
+                        <li><a href="/study-planner/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Study Planner</a></li>
+                        <li><a href="/plans/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">History</a></li>
+
+                    </ul>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-4">Platform</h5>
+                    <ul class="space-y-2.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <li><a href="/#features" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Our Features</a></li>
+                        <li><a href="/#about" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">About Us</a></li>
+                        <li><a href="/#terms" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Terms & Rules</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 text-xs font-medium text-slate-400">
+                <div class="flex items-center gap-2">
+                    <p>&copy; 2026 StudySuite AI • All rights reserved.</p>
+                </div>
+            </div>
+
+        </div>
+    </footer>
+
+    <script>
+        // Safe Theme Toggle Handler
+// Safe Theme Toggle Handler
+function toggleTheme() {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.theme = isDark ? 'dark' : 'light';
+}
+
+// Initial Sync on Load
+document.addEventListener('DOMContentLoaded', () => {
+    const isDarkInitial = document.documentElement.classList.contains('dark');
+});
+
+function updateThemeIcons(isDark) {
+    document.querySelectorAll('.sun-icon').forEach(el => el.classList.toggle('hidden', !isDark));
+    document.querySelectorAll('.moon-icon').forEach(el => el.classList.toggle('hidden', isDark));
+}
+
+// Initial Sync on Load
+document.addEventListener('DOMContentLoaded', () => {
+    const isDarkInitial = document.documentElement.classList.contains('dark');
+    updateThemeIcons(isDarkInitial);
+});
+
+        // Tabs Switcher with constant white text classes for active tab
+        function switchTab(name) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-neutral-950', 'text-white', 'dark:bg-blue-600', 'dark:text-white');
+btn.classList.add('text-slate-500', 'dark:text-slate-400');
+            });
+            document.getElementById('content-' + name).classList.add('active');
+            const btn = document.getElementById('tab-' + name);
+            btn.classList.add('bg-neutral-950', 'text-white', 'dark:bg-blue-600', 'dark:text-white');
+btn.classList.remove('text-slate-500', 'dark:text-slate-400');
+        }
+
+        // Day Accordion Toggle
+        function toggleDay(num) {
+            const content  = document.getElementById('day-' + num);
+            const chevron  = document.getElementById('chevron-' + num);
+            const isHidden = content.classList.contains('hidden');
+            content.classList.toggle('hidden', !isHidden);
+            chevron.style.transform = isHidden ? 'rotate(180deg)' : '';
+        }
+
+        // Open today's day by default
+        document.addEventListener('DOMContentLoaded', () => {
+            const firstDay = document.querySelector('[id^="day-"]');
+            if (firstDay) {
+                const num = firstDay.id.replace('day-', '');
+                toggleDay(num);
+            }
+        });
+
+        const PLAN_ID   = {{ plan.id }};
+        const CSRF_TOKEN = '{{ csrf_token }}';
+
+        // Toast Messages
+        function showToast(msg, type = 'success') {
+            const toast    = document.getElementById('toast');
+            const toastTxt = document.getElementById('toastText');
+            const toastIco = document.getElementById('toastIcon');
+
+            toastTxt.textContent = msg;
+
+            if (type === 'success') {
+                toast.className = toast.className.replace(/bg-red-\d+/g, '');
+                toast.classList.remove('bg-red-600');
+                toast.classList.add('bg-slate-900', 'dark:bg-white');
+                toastIco.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>';
+            } else {
+                toast.classList.remove('bg-slate-900');
+                toast.classList.add('bg-red-600');
+                toastIco.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>';
+            }
+
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3500);
+        }
+
+        // Delete Modal Handlers
+        function openDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.add('hidden');
+        }
+
+        async function confirmDelete() {
+            const btn = document.getElementById('deleteConfirmBtn');
+            btn.textContent = 'Deleting...';
+            btn.disabled    = true;
+
+            try {
+                const res  = await fetch(`/study-plan/${PLAN_ID}/delete/`, {
+                    method:  'POST',
+                    headers: { 'X-CSRFToken': CSRF_TOKEN },
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast('Plan deleted successfully.');
+                    setTimeout(() => window.location.href = data.redirect_url, 1000);
+                } else {
+                    showToast(data.error || 'Delete failed.', 'error');
+                    btn.textContent = 'Yes, Delete';
+                    btn.disabled    = false;
+                }
+            } catch (e) {
+                showToast('Network error.', 'error');
+                btn.textContent = 'Yes, Delete';
+                btn.disabled    = false;
+            }
+        }
+
+        // Date Modal Handlers
+        function openDateModal() {
+            document.getElementById('dateModal').classList.remove('hidden');
+            document.getElementById('dateError').classList.add('hidden');
+        }
+        function closeDateModal() {
+            document.getElementById('dateModal').classList.add('hidden');
+        }
+
+        async function confirmDateChange() {
+            const input = document.getElementById('newExamDateInput');
+            const btn   = document.getElementById('dateConfirmBtn');
+            const errEl = document.getElementById('dateError');
+            const errTx = document.getElementById('dateErrorText');
+
+            errEl.classList.add('hidden');
+
+            if (!input.value) {
+                errTx.textContent = 'Please select a date.';
+                errEl.classList.remove('hidden');
+                return;
+            }
+
+            btn.textContent = 'Updating...';
+            btn.disabled    = true;
+
+            const formData = new FormData();
+            formData.append('exam_date', input.value);
+
+            try {
+                const res  = await fetch(`/study-plan/${PLAN_ID}/update-date/`, {
+                    method:  'POST',
+                    headers: { 'X-CSRFToken': CSRF_TOKEN },
+                    body:    formData,
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                        closeDateModal();
+                        showToast(`Date updated to ${data.new_date} — Regenerating plan...`);
+                        setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    errTx.textContent = data.error || 'Update failed.';
+                    errEl.classList.remove('hidden');
+                }
+            } catch (e) {
+                errTx.textContent = 'Network error. Try again.';
+                errEl.classList.remove('hidden');
+            } finally {
+                btn.textContent = 'Update Date';
+                btn.disabled    = false;
+            }
+        }
+
+        // Modal triggers on backdrop
+        document.getElementById('deleteModal').addEventListener('click', function(e) { if (e.target === this) closeDeleteModal(); });
+        document.getElementById('dateModal').addEventListener('click', function(e) { if (e.target === this) closeDateModal(); });
+
+        // Close on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeDeleteModal();
+                closeDateModal();
+            }
+        });
+    </script>
+
+    <div id="deleteModal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center p-4" style="background: rgba(9,13,22,0.6); backdrop-filter: blur(8px);">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-700">
+            <div class="w-12 h-12 bg-red-100 dark:bg-red-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                               d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </div>
+            <h3 class="font-display text-lg font-bold text-slate-900 dark:text-white text-center mb-2">Delete This Plan?</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 text-center mb-6 leading-relaxed">
+                <strong class="text-slate-700 dark:text-slate-300">{{ plan.plan_title }}</strong> and all its data will be permanently deleted.<br>This action cannot be undone.
+            </p>
+            <div class="flex gap-3">
+                <button onclick="closeDeleteModal()"
+                        class="flex-1 px-4 py-2.5 text-sm font-semibold rounded-xl bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 transition-all">
+                    Cancel
+                </button>
+                <button onclick="confirmDelete()" id="deleteConfirmBtn"
+                        class="flex-1 px-4 py-2.5 text-sm font-semibold rounded-xl bg-neutral-950 text-white border border-blue-500/40 dark:bg-blue-600 dark:border-blue-400 transition-all flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4 text-white hidden md:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                                                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6"/></svg>
+                    Yes, Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dateModal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center p-4" style="background: rgba(9,13,22,0.6); backdrop-filter: blur(8px);">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-700">
+            <div class="w-12 h-12 bg-amber-100 dark:bg-amber-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            <h3 class="font-display text-lg font-bold text-slate-900 dark:text-white text-center mb-1">Change Exam Date</h3>
+            <p class="text-xs text-slate-400 text-center mb-5">Current: <span id="currentDateDisplay" class="font-semibold text-slate-600 dark:text-slate-300">{{ plan.exam_date|date:"d M Y" }}</span></p>
+            <div class="mb-5">
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">New Exam Date</label>
+                <input type="date" id="newExamDateInput" min="{{ today_date }}" value="{{ plan.exam_date|date:'Y-m-d' }}"
+                       class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all">
+            </div>
+            <div id="dateError" class="hidden mb-4 px-3 py-2 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-xl">
+                <p class="text-xs font-semibold text-red-600 dark:text-red-400" id="dateErrorText"></p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="closeDateModal()"
+                        class="flex-1 px-4 py-2.5 text-sm font-semibold rounded-xl bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 transition-all">
+                    Cancel
+                </button>
+                <button onclick="confirmDateChange()" id="dateConfirmBtn"
+                        class="flex-1 px-4 py-2.5 text-sm font-semibold rounded-xl bg-neutral-950 text-white border border-blue-500/40 dark:bg-blue-600 dark:border-blue-400 transition-all flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4 text-white hidden md:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    Update Date
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="hidden fixed bottom-6 right-6 z-[99999] flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-semibold max-w-xs transition-all duration-300">
+        <svg id="toastIcon" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        <span id="toastText"></span>
+    </div>
+
+</body>
+</html>

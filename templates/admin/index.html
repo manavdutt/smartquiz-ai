@@ -1,0 +1,83 @@
+{% extends "admin/index.html" %}
+{% load i18n %}
+
+{% block content %}
+
+{% if dashboard_stats %}
+<div style="margin: 0 0 24px 0;">
+
+    <!-- Title -->
+    <h2 style="font-size:15px; font-weight:700; color:#1e293b; margin:0 0 12px 0; letter-spacing:0.3px;">
+        📊 Today's Activity &amp; Overall Stats
+    </h2>
+
+    <!-- Row 1 — Today -->
+    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-bottom:10px;">
+
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:14px 16px;">
+            <div style="font-size:11px; font-weight:600; color:#16a34a; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">🧠 Quizzes Today</div>
+            <div style="font-size:28px; font-weight:800; color:#15803d; line-height:1;">{{ dashboard_stats.today_quizzes }}</div>
+        </div>
+
+        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:14px 16px;">
+            <div style="font-size:11px; font-weight:600; color:#3b82f6; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">📝 Questions Today</div>
+            <div style="font-size:28px; font-weight:800; color:#1d4ed8; line-height:1;">{{ dashboard_stats.today_question_sets }}</div>
+        </div>
+
+        <div style="background:#fdf4ff; border:1px solid #e9d5ff; border-radius:10px; padding:14px 16px;">
+            <div style="font-size:11px; font-weight:600; color:#9333ea; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">📅 Plans Today</div>
+            <div style="font-size:28px; font-weight:800; color:#7e22ce; line-height:1;">{{ dashboard_stats.today_plans }}</div>
+        </div>
+
+        <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:10px; padding:14px 16px;">
+            <div style="font-size:11px; font-weight:600; color:#ea580c; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">🟢 Active Sessions</div>
+            <div style="font-size:28px; font-weight:800; color:#c2410c; line-height:1;">{{ dashboard_stats.active_sessions }}</div>
+        </div>
+
+    </div>
+
+    <!-- Row 2 — All Time -->
+    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-bottom:10px;">
+
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px;">
+            <div style="font-size:11px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">🧠 Total Quizzes</div>
+            <div style="font-size:28px; font-weight:800; color:#1e293b; line-height:1;">{{ dashboard_stats.total_quizzes }}</div>
+        </div>
+
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px;">
+            <div style="font-size:11px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">📝 Total Questions</div>
+            <div style="font-size:28px; font-weight:800; color:#1e293b; line-height:1;">{{ dashboard_stats.total_question_sets }}</div>
+        </div>
+
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px;">
+            <div style="font-size:11px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">📅 Total Plans</div>
+            <div style="font-size:28px; font-weight:800; color:#1e293b; line-height:1;">{{ dashboard_stats.total_study_plans }}</div>
+        </div>
+
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px;">
+            <div style="font-size:11px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">🏆 Total Attempts</div>
+            <div style="font-size:28px; font-weight:800; color:#1e293b; line-height:1;">{{ dashboard_stats.total_attempts }}</div>
+        </div>
+
+    </div>
+
+    <!-- Row 3 — User Breakdown -->
+    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;">
+
+        <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:14px 16px;">
+            <div style="font-size:11px; font-weight:600; color:#0284c7; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">👤 Registered Quizzes</div>
+            <div style="font-size:28px; font-weight:800; color:#0369a1; line-height:1;">{{ dashboard_stats.registered_quizzes }}</div>
+        </div>
+
+        <div style="background:#fafafa; border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px;">
+            <div style="font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">🌐 Guest Quizzes</div>
+            <div style="font-size:28px; font-weight:800; color:#64748b; line-height:1;">{{ dashboard_stats.guest_quizzes }}</div>
+        </div>
+
+    </div>
+
+</div>
+{% endif %}
+
+{{ block.super }}
+{% endblock %}

@@ -1,0 +1,607 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="icon" type="image/png" href="{% static 'favicon.png' %}">
+    <title>History — StudySuite AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { fontFamily: { sans: ['Plus Jakarta Sans','sans-serif'], display: ['Syne','sans-serif'] } } }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
+        .font-display { font-family: 'Syne', sans-serif; }
+        .grid-bg {
+            background-image: linear-gradient(rgba(99,102,241,0.07) 1px,transparent 1px),
+                              linear-gradient(90deg,rgba(99,102,241,0.07) 1px,transparent 1px);
+            background-size: 48px 48px;
+        }
+        .shine-card { border-top:2px solid rgba(0,0,0,0.75); border-bottom:2px solid rgba(0,0,0,0.75); }
+        .dark .shine-card { border-top:2px solid rgba(255,255,255,0.65); border-bottom:2px solid rgba(255,255,255,0.65); }
+        .shine-header { border-bottom: 3px solid rgba(0, 0, 0, 0.75) !important; }
+.dark .shine-header { border-bottom: 3px solid rgba(255, 255, 255, 0.65) !important; }
+        .shine-footer { border-top:2px solid rgba(0,0,0,0.75); }
+        .dark .shine-footer { border-top:2px solid rgba(255,255,255,0.65); }
+        .tab-btn.active { background:#4f46e5 !important; color:#fff !important; border-color:#4f46e5 !important; }
+        .scrollbar-hide { -ms-overflow-style:none; scrollbar-width:none; }
+        .scrollbar-hide::-webkit-scrollbar { display:none; }
+
+        /* PAGE LOADER */
+        #pageLoader { position:fixed; inset:0; z-index:99999; background:#f8fafc; display:flex; flex-direction:column; align-items:center; justify-content:center; transition:opacity 0.5s ease,visibility 0.5s ease; }
+        .dark #pageLoader { background:#090d16; }
+        #pageLoader.hide { opacity:0; visibility:hidden; }
+        @keyframes logoPulse { 0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(99,102,241,0.4);} 50%{transform:scale(1.06);box-shadow:0 0 0 12px rgba(99,102,241,0);} }
+        .logo-pulse { animation:logoPulse 1.5s ease infinite; }
+        @keyframes dotBounce { 0%,80%,100%{transform:translateY(0);opacity:0.4;} 40%{transform:translateY(-6px);opacity:1;} }
+        .dot-1{animation:dotBounce 1.2s ease infinite 0s;}
+        .dot-2{animation:dotBounce 1.2s ease infinite 0.2s;}
+        .dot-3{animation:dotBounce 1.2s ease infinite 0.4s;}
+        @keyframes progressFill{from{width:0%;}to{width:100%;}}
+        #loaderProgress{animation:progressFill 1.8s ease-out forwards;}
+
+        /* ═══ ERROR MODAL ═══ */
+#errorModal { display:none; }
+#errorModal.show { display:flex; }
+@keyframes modalIn {
+    from { opacity:0; transform:scale(0.92) translateY(10px); }
+    to   { opacity:1; transform:scale(1) translateY(0); }
+}
+.error-modal-box { animation: modalIn 0.22s cubic-bezier(0.16,1,0.3,1) forwards; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] dark:bg-[#090d16] text-gray-900 dark:text-white min-h-screen grid-bg transition-colors duration-300 capitalize">
+
+<!-- PAGE LOADER -->
+<div id="pageLoader">
+    <div class="logo-pulse w-14 h-14 sm:w-16 sm:h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mb-5 shadow-xl shadow-indigo-500/20">
+        <svg class="w-7 h-7 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4L2 9l10 5 10-5-10-5z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 11v4c0 2.5 3 4 6 4s6-1.5 6-4v-4"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20 9v7"/>
+        </svg>
+    </div>
+    <h2 class="font-display text-xl sm:text-2xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">
+        StudySuite<span class="text-indigo-600 dark:text-indigo-400">AI</span>
+    </h2>
+    <p class="text-xs font-medium tracking-wide text-slate-400 dark:text-slate-500 mb-5 uppercase">Loading History...</p>
+    <div class="flex items-center gap-1.5 mb-4">
+        <div class="dot-1 w-2 h-2 bg-indigo-600 rounded-full"></div>
+        <div class="dot-2 w-2 h-2 bg-indigo-400 rounded-full"></div>
+        <div class="dot-3 w-2 h-2 bg-cyan-400 rounded-full"></div>
+    </div>
+    <div class="w-32 h-1 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+        <div id="loaderProgress" class="h-full bg-indigo-600 rounded-full"></div>
+    </div>
+</div>
+
+<!-- HEADER -->
+<header class="sticky top-0 z-50 shine-header bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
+    <div class="w-full px-6 md:px-10 h-16 flex justify-between items-center">
+
+    <!-- LEFT — Logo -->
+    <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4L2 9l10 5 10-5-10-5z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 11v4c0 2.5 3 4 6 4s6-1.5 6-4v-4"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20 9v7"/>
+            </svg>
+        </div>
+        <span class="font-display text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+            StudySuite<span class="text-indigo-600 dark:text-indigo-400">AI</span>
+        </span>
+    </div>
+
+        <!-- RIGHT — Home + Divider + Toggle -->
+    <div class="flex items-center gap-2 sm:gap-4">
+
+        <a href="/"
+           class="h-9 px-4 bg-black text-white dark:bg-blue-600 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-bold shadow-sm"
+           title="Home">
+    <span>Home</span>
+
+    <svg class="hidden lg:block w-4 h-4"
+         fill="none"
+         stroke="currentColor"
+         stroke-width="2"
+         viewBox="0 0 24 24">
+        <path stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h3m-6 0a1 1 0 001-1v-4a1 1 0 00-1-1h-2a1 1 0 00-1 1v4a1 1 0 001 1m6 0h-6"/>
+    </svg>
+</a>
+
+        <div class="h-4 w-px bg-slate-200 dark:bg-slate-800"></div>
+
+        <button onclick="toggleTheme()" type="button"
+                class="relative inline-flex h-9 w-16 items-center justify-between rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-1 cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 shadow-inner group focus:outline-none"
+                aria-label="Toggle Theme">
+            <span class="absolute top-[3px] left-[3px] h-[28px] w-[28px] rounded-full bg-white dark:bg-blue-600 shadow-md transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform translate-x-0 dark:translate-x-7"></span>
+            <span class="z-10 flex items-center justify-center w-7 h-7 text-amber-500 dark:text-slate-500 transition-colors duration-300">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.243 17.657l.707.707M6.343 4.343l.707-.707M12 7a5 5 0 100 10 5 5 0 000-10z"/>
+                </svg>
+            </span>
+            <span class="z-10 flex items-center justify-center w-7 h-7 text-slate-400 dark:text-blue-100 transition-colors duration-300">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                </svg>
+            </span>
+        </button>
+
+    </div>
+</div>
+</header>
+
+<!-- MAIN -->
+<main class="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 lg:py-10">
+
+    <!-- Page Title -->
+    <div class="mb-6 sm:mb-8">
+        <h1 class="font-display font-bold text-2xl sm:text-3xl text-gray-900 dark:text-white mb-1 leading-tight">
+            Generation History
+        </h1>
+        <p class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm leading-relaxed">
+            All your quizzes, question papers, and study plans — in one place.
+        </p>
+    </div>
+
+    <!-- Guest block -->
+    {% if not user.is_authenticated %}
+    <div class="shine-card bg-white dark:bg-white/5 rounded-2xl p-8 sm:p-12 text-center">
+        <div class="w-14 h-14 sm:w-16 sm:h-16 bg-indigo-50 dark:bg-indigo-600/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-7 h-7 sm:w-8 sm:h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+        </div>
+        <h3 class="font-display font-bold text-lg sm:text-xl text-gray-900 dark:text-white mb-2">
+    Log in to view your history
+</h3>
+<p class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mb-2">
+    Content generated as a guest will not be saved.
+</p>
+<p class="text-gray-400 dark:text-gray-500 text-xs mb-6">
+    Log in to get 10 daily generations and save all your history.
+</p>
+        <a href="/accounts/google/login/?next=/plans/"
+           class="inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 bg-black dark:bg-blue-600 text-white text-sm font-bold rounded-xl transition-opacity">
+            Sign in with Google — Free
+        </a>
+    </div>
+
+    {% else %}
+
+    <!-- Stats -->
+    <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-6 sm:mb-8">
+        <div class="shine-card bg-white dark:bg-white/5 rounded-xl p-3 sm:p-4 text-center">
+            <div class="font-display font-bold text-xl sm:text-2xl md:text-3xl text-indigo-600 dark:text-indigo-400 leading-none mb-1">{{ quizzes.count }}</div>
+            <div class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-medium leading-tight">MCQ Quizzes</div>
+        </div>
+        <div class="shine-card bg-white dark:bg-white/5 rounded-xl p-3 sm:p-4 text-center">
+            <div class="font-display font-bold text-xl sm:text-2xl md:text-3xl text-indigo-600 dark:text-indigo-400 leading-none mb-1">{{ question_sets.count }}</div>
+            <div class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-medium leading-tight">Questions</div>
+        </div>
+        <div class="shine-card bg-white dark:bg-white/5 rounded-xl p-3 sm:p-4 text-center">
+            <div class="font-display font-bold text-xl sm:text-2xl md:text-3xl text-indigo-600 dark:text-indigo-400 leading-none mb-1">{{ plans.count }}</div>
+            <div class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-medium leading-tight">Study Plans</div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-1.5 sm:gap-2 mb-5 sm:mb-6 overflow-x-auto scrollbar-hide pb-1">
+        <button onclick="switchTab('all')" id="tab-all"
+                class="tab-btn active shrink-0 font-display font-semibold text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-gray-700 dark:text-gray-300  transition-all whitespace-nowrap">
+            All
+        </button>
+        <button onclick="switchTab('quiz')" id="tab-quiz"
+                class="tab-btn shrink-0 font-display font-semibold text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-gray-700 dark:text-gray-300  transition-all whitespace-nowrap">
+            🧠 Quizzes
+        </button>
+        <button onclick="switchTab('question')" id="tab-question"
+                class="tab-btn shrink-0 font-display font-semibold text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-gray-700 dark:text-gray-300  transition-all whitespace-nowrap">
+            📝 Papers
+        </button>
+        <button onclick="switchTab('plan')" id="tab-plan"
+                class="tab-btn shrink-0 font-display font-semibold text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-gray-700 dark:text-gray-300  transition-all whitespace-nowrap">
+            📅 Plans
+        </button>
+    </div>
+
+    <!-- ═══════ ALL ═══════ -->
+    <div id="section-all">
+        {% if not quizzes and not question_sets and not plans %}
+        <div class="shine-card bg-white dark:bg-white/5 rounded-2xl p-8 sm:p-12 lg:p-16 text-center">
+            <div class="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-50 dark:bg-indigo-600/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+            </div>
+            <h3 class="font-display font-bold text-lg sm:text-xl mb-2">Nothing Here Yet</h3>
+            <p class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mb-6">Start by using any tool below</p>
+            <div class="flex flex-col xs:flex-row gap-2 sm:gap-3 justify-center items-center">
+                <a href="{% url 'home' %}" class="w-full xs:w-auto px-4 py-2.5 bg-black dark:bg-blue-600 text-white text-xs sm:text-sm font-bold rounded-lg transition-opacity text-center">Create Quiz</a>
+                <a href="{% url 'question_generator' %}" class="w-full xs:w-auto px-4 py-2.5 bg-black dark:bg-blue-600 text-white text-xs sm:text-sm font-bold rounded-lg transition-opacity text-center">Create Questions</a>
+                <a href="{% url 'study_planner' %}" class="w-full xs:w-auto px-4 py-2.5 bg-black dark:bg-blue-600 text-white text-xs sm:text-sm font-bold rounded-lg transition-opacity text-center">Study Plan</a>
+            </div>
+        </div>
+        {% else %}
+
+        <!-- Quizzes -->
+        {% if quizzes %}
+        <div class="mb-8 sm:mb-10">
+            <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                <span class="text-base sm:text-lg">🧠</span>
+                <h2 class="font-display font-bold text-base sm:text-lg text-gray-900 dark:text-white">MCQ Quizzes</h2>
+                <span class="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-indigo-100 dark:bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 rounded-full font-bold">{{ quizzes.count }}</span>
+                <a href="{% url 'home' %}" class="ml-auto text-[10px] sm:text-xs text-indigo-500  dark:text-indigo-400 font-semibold whitespace-nowrap">+ Create New</a>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                {% for quiz in quizzes %}
+                <div class="hcard shine-card bg-white dark:bg-white/5 rounded-xl p-4 sm:p-5 flex flex-col gap-2.5 sm:gap-3">
+                    <div class="flex items-start justify-between gap-2">
+                        <h3 class="font-display font-bold text-xs sm:text-sm text-gray-900 dark:text-white leading-snug line-clamp-2">{{ quiz.title }}</h3>
+                        <span class="shrink-0 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-bold
+                            {% if quiz.difficulty == 'expert' %}bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400
+                            {% elif quiz.difficulty == 'advance' %}bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400
+                            {% else %}bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400{% endif %}">
+                            {{ quiz.difficulty|upper }}
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 flex-wrap">
+                        <span>❓ {{ quiz.question_count }} Qs</span>
+                        <span>🌐 {{ quiz.language|upper }}</span>
+                        <span>{% if quiz.input_type == 'file' %}📄{% elif quiz.input_type == 'youtube' %}▶️{% else %}📝{% endif %} {{ quiz.get_input_type_display }}</span>
+                    </div>
+                    <div class="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500">{{ quiz.created_at|date:"d M Y, h:i A" }}</div>
+                    {% if quiz.attempts.exists %}
+                    <a href="{% url 'result' quiz.attempts.first.id %}" class="mt-auto w-full text-center py-2 bg-black dark:bg-blue-600 text-white text-xs font-bold rounded-lg transition-opacity">Show Result →</a>
+                    {% else %}
+                    <a href="{% url 'quiz' quiz.id %}" class="mt-auto w-full text-center py-2 bg-black dark:bg-blue-600 text-white text-xs font-bold rounded-lg transition-opacity">Take Quiz →</a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Question Sets -->
+        {% if question_sets %}
+        <div class="mb-8 sm:mb-10">
+            <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                <span class="text-base sm:text-lg">📝</span>
+                <h2 class="font-display font-bold text-base sm:text-lg text-gray-900 dark:text-white">Question Papers</h2>
+                <span class="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-indigo-100 dark:bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 rounded-full font-bold">{{ question_sets.count }}</span>
+                <a href="{% url 'question_generator' %}" class="ml-auto text-[10px] sm:text-xs text-indigo-500  dark:text-indigo-400 font-semibold whitespace-nowrap">+ Create New</a>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                {% for qset in question_sets %}
+                <div class="hcard shine-card bg-white dark:bg-white/5 rounded-xl p-4 sm:p-5 flex flex-col gap-2.5 sm:gap-3">
+                    <div class="flex items-start justify-between gap-2">
+                        <h3 class="font-display font-bold text-xs sm:text-sm text-gray-900 dark:text-white leading-snug line-clamp-2">{{ qset.title }}</h3>
+                        <span class="shrink-0 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-bold bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+                            {{ qset.get_question_type_display }}
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 flex-wrap">
+                        <span>❓ {{ qset.question_count }} Qs</span>
+                        <span class="{% if qset.difficulty == 'expert' %}text-red-500{% elif qset.difficulty == 'advance' %}text-amber-500{% else %}text-green-500{% endif %} font-bold">{{ qset.difficulty|upper }}</span>
+                        <span>🌐 {{ qset.language|upper }}</span>
+                    </div>
+                    <div class="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500">{{ qset.created_at|date:"d M Y, h:i A" }}</div>
+                    <a href="{% url 'question_set' qset.id %}" class="mt-auto w-full text-center py-2 bg-black dark:bg-blue-600 text-white text-xs font-bold rounded-lg transition-opacity">View Questions →</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Plans -->
+        {% if plans %}
+        <div class="mb-8 sm:mb-10">
+            <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                <span class="text-base sm:text-lg">📅</span>
+                <h2 class="font-display font-bold text-base sm:text-lg text-gray-900 dark:text-white">Study Plans</h2>
+                <span class="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-indigo-100 dark:bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 rounded-full font-bold">{{ plans.count }}</span>
+                <a href="{% url 'study_planner' %}" class="ml-auto text-[10px] sm:text-xs text-indigo-500  dark:text-indigo-400 font-semibold whitespace-nowrap">+ Create New</a>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                {% for plan in plans %}
+                <div class="hcard shine-card bg-white dark:bg-white/5 rounded-xl p-4 sm:p-5 flex flex-col gap-2.5 sm:gap-3">
+                    <div class="flex items-start justify-between gap-2">
+                        <h3 class="font-display font-bold text-xs sm:text-sm text-gray-900 dark:text-white leading-snug line-clamp-2">{{ plan.plan_title|default:plan.subject_name|default:"Study Plan" }}</h3>
+                        {% if plan.is_expired %}
+                        <span class="shrink-0 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-bold bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">Expired</span>
+                        {% elif plan.days_left <= 7 %}
+                        <span class="shrink-0 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">{{ plan.days_left }}d 🔥</span>
+                        {% else %}
+                        <span class="shrink-0 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-bold bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">{{ plan.days_left }}d left</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 flex-wrap">
+                        <span>📅 {{ plan.exam_date|date:"d M Y" }}</span>
+                        <span>⏱ {{ plan.total_hours|floatformat:0 }}h</span>
+                        <span>📖 {{ plan.total_days }}d</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-[10px] sm:text-xs flex-wrap">
+                        <span class="px-1.5 sm:px-2 py-0.5 rounded-full bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 font-semibold">{{ plan.target_score|upper }}</span>
+                        <span class="px-1.5 sm:px-2 py-0.5 rounded-full bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 font-semibold">{{ plan.exam_format|upper }}</span>
+                    </div>
+                    <div class="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500">{{ plan.created_at|date:"d M Y, h:i A" }}</div>
+                    <div class="flex gap-2 mt-auto">
+                        <a href="{% url 'study_plan_detail' plan.id %}" class="flex-1 text-center py-2 bg-black dark:bg-blue-600 text-white text-xs font-bold rounded-lg transition-opacity">View Plan →</a>
+                        <button onclick="deletePlan({{ plan.id }})" class="px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 text-xs font-bold rounded-lg  transition-colors">🗑</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% endif %}
+    </div>
+
+    <!-- ═══════ QUIZ TAB ═══════ -->
+    <div id="section-quiz" class="hidden">
+        {% if quizzes %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {% for quiz in quizzes %}
+            <div class="hcard shine-card bg-white dark:bg-white/5 rounded-xl p-4 sm:p-5 flex flex-col gap-2.5 sm:gap-3">
+                <div class="flex items-start justify-between gap-2">
+                    <h3 class="font-display font-bold text-xs sm:text-sm text-gray-900 dark:text-white leading-snug line-clamp-2">{{ quiz.title }}</h3>
+                    <span class="shrink-0 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-bold {% if quiz.difficulty == 'expert' %}bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400{% elif quiz.difficulty == 'advance' %}bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400{% else %}bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400{% endif %}">{{ quiz.difficulty|upper }}</span>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 flex-wrap">
+                    <span>❓ {{ quiz.question_count }} Qs</span>
+                    <span>🌐 {{ quiz.language|upper }}</span>
+                    <span>{% if quiz.input_type == 'file' %}📄{% elif quiz.input_type == 'youtube' %}▶️{% else %}📝{% endif %} {{ quiz.get_input_type_display }}</span>
+                </div>
+                <div class="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500">{{ quiz.created_at|date:"d M Y, h:i A" }}</div>
+                {% if quiz.attempts.exists %}
+                <a href="{% url 'result' quiz.attempts.first.id %}" class="mt-auto w-full text-center py-2 bg-black dark:bg-blue-600 text-white text-xs font-bold rounded-lg transition-opacity">Show Result →</a>
+                {% else %}
+                <a href="{% url 'quiz' quiz.id %}" class="mt-auto w-full text-center py-2 bg-black dark:bg-blue-600 text-white text-xs font-bold rounded-lg transition-opacity">Take Quiz →</a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="shine-card bg-white dark:bg-white/5 rounded-2xl p-8 sm:p-12 text-center">
+            <p class="text-gray-500 dark:text-gray-400 text-sm mb-4">No quiz created yet</p>
+            <a href="{% url 'home' %}" class="inline-block px-4 py-2 bg-black dark:bg-blue-600 text-white text-sm font-bold rounded-lg transition-opacity">Generate Quiz</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ═══════ QUESTION TAB ═══════ -->
+    <div id="section-question" class="hidden">
+        {% if question_sets %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {% for qset in question_sets %}
+            <div class="hcard shine-card bg-white dark:bg-white/5 rounded-xl p-4 sm:p-5 flex flex-col gap-2.5 sm:gap-3">
+                <div class="flex items-start justify-between gap-2">
+                    <h3 class="font-display font-bold text-xs sm:text-sm text-gray-900 dark:text-white leading-snug line-clamp-2">{{ qset.title }}</h3>
+                    <span class="shrink-0 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-bold bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">{{ qset.get_question_type_display }}</span>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 flex-wrap">
+                    <span>❓ {{ qset.question_count }} Qs</span>
+                    <span class="{% if qset.difficulty == 'expert' %}text-red-500{% elif qset.difficulty == 'advance' %}text-amber-500{% else %}text-green-500{% endif %} font-bold">{{ qset.difficulty|upper }}</span>
+                    <span>🌐 {{ qset.language|upper }}</span>
+                </div>
+                <div class="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500">{{ qset.created_at|date:"d M Y, h:i A" }}</div>
+                <a href="{% url 'question_set' qset.id %}" class="mt-auto w-full text-center py-2 bg-black dark:bg-blue-600 text-white text-xs font-bold rounded-lg transition-opacity">View Questions →</a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="shine-card bg-white dark:bg-white/5 rounded-2xl p-8 sm:p-12 text-center">
+            <p class="text-gray-500 dark:text-gray-400 text-sm mb-4">No question paper created yet</p>
+            <a href="{% url 'question_generator' %}" class="inline-block px-4 py-2 bg-black dark:bg-blue-600 text-white text-sm font-bold rounded-lg transition-opacity">Generate Questions</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ═══════ PLAN TAB ═══════ -->
+    <div id="section-plan" class="hidden">
+        {% if plans %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {% for plan in plans %}
+            <div class="hcard shine-card bg-white dark:bg-white/5 rounded-xl p-4 sm:p-5 flex flex-col gap-2.5 sm:gap-3">
+                <div class="flex items-start justify-between gap-2">
+                    <h3 class="font-display font-bold text-xs sm:text-sm text-gray-900 dark:text-white leading-snug line-clamp-2">{{ plan.plan_title|default:plan.subject_name|default:"Study Plan" }}</h3>
+                    {% if plan.is_expired %}<span class="shrink-0 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-bold bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">Expired</span>
+                    {% elif plan.days_left <= 7 %}<span class="shrink-0 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">{{ plan.days_left }}d 🔥</span>
+                    {% else %}<span class="shrink-0 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-bold bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">{{ plan.days_left }}d left</span>{% endif %}
+                </div>
+                <div class="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 flex-wrap">
+                    <span>📅 {{ plan.exam_date|date:"d M Y" }}</span>
+                    <span>⏱ {{ plan.total_hours|floatformat:0 }}h</span>
+                    <span>📖 {{ plan.total_days }}d</span>
+                </div>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 font-semibold">{{ plan.target_score|upper }}</span>
+                    <span class="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 font-semibold">{{ plan.exam_format|upper }}</span>
+                </div>
+                <div class="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500">{{ plan.created_at|date:"d M Y, h:i A" }}</div>
+                <div class="flex gap-2 mt-auto">
+                    <a href="{% url 'study_plan_detail' plan.id %}" class="flex-1 text-center py-2 bg-black dark:bg-blue-600 text-white text-xs font-bold rounded-lg transition-opacity">View Plan →</a>
+                    <button onclick="deletePlan({{ plan.id }})" class="px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 text-xs font-bold rounded-lg  transition-colors">🗑</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="shine-card bg-white dark:bg-white/5 rounded-2xl p-8 sm:p-12 text-center">
+            <p class="text-gray-500 dark:text-gray-400 text-sm mb-4">No study plan created yet</p>
+            <a href="{% url 'study_planner' %}" class="inline-block px-4 py-2 bg-black dark:bg-blue-600 text-white text-sm font-bold rounded-lg transition-opacity">Create Study Plan</a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% endif %}
+</main>
+
+<!-- FOOTER -->
+<footer class="shine-footer border-t border-slate-200/60 dark:border-slate-800/40 bg-white/60 dark:bg-slate-950/40 backdrop-blur-sm relative z-10">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 md:pt-16 pb-6 sm:pb-8">
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-5 sm:gap-8 pb-10 sm:pb-12 border-b border-slate-900/10 dark:border-white/10">
+
+                <div class="col-span-2 md:col-span-2">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center">
+                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4L2 9l10 5 10-5-10-5z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 11v4c0 2.5 3 4 6 4s6-1.5 6-4v-4"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20 9v7"/>
+                            </svg>
+                        </div>
+                        <span class="font-display font-bold text-base text-slate-900 dark:text-white tracking-tight">
+                            StudySuite<span class="text-indigo-600 dark:text-indigo-400">AI</span>
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm">
+                        Making exam preparation simple, fast, and 100% free. Create custom quizzes, practice sheets, and structured smart timetables in under 30 seconds.
+                    </p>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-4">AI Study Tools</h5>
+                    <ul class="space-y-2.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <li><a href="/quiz-generator/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Quiz Generator</a></li>
+                        <li><a href="{% url 'question_generator' %}" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Question Generator</a></li>
+                        <li><a href="/study-planner/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Study Planner</a></li>
+                        <li><a href="/plans/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">History</a></li>
+
+                    </ul>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-4">Platform</h5>
+                    <ul class="space-y-2.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <li><a href="/#features" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Our Features</a></li>
+                        <li><a href="/#about" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">About Us</a></li>
+                        <li><a href="/#terms" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Terms & Rules</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 text-xs font-medium text-slate-400">
+                <div class="flex items-center gap-2">
+                    <p>&copy; 2026 StudySuite AI • All rights reserved.</p>
+                </div>
+            </div>
+
+        </div>
+    </footer>
+
+<script>
+    const ERROR_TYPES = {
+    limit: { title:'Daily Limit Reached', icon:'bg-orange-500/20', iconColor:'text-orange-400', btn:'bg-orange-600 hover:bg-orange-700', keywords:['limit','daily','too many','quota'] },
+    auth:  { title:'Login Required',      icon:'bg-blue-500/20',   iconColor:'text-blue-400',   btn:'bg-blue-600 hover:bg-blue-700',   keywords:['login','sign in','auth'] },
+    file:  { title:'Delete Error',        icon:'bg-red-500/20',    iconColor:'text-red-400',    btn:'bg-red-600 hover:bg-red-700',    keywords:['delete','failed','plan'] },
+    ai:    { title:'AI Service Error',    icon:'bg-purple-500/20', iconColor:'text-purple-400', btn:'bg-purple-600 hover:bg-purple-700', keywords:['gemini','generation','unavailable'] },
+    default: { title:'Something Went Wrong', icon:'bg-rose-500/20', iconColor:'text-rose-400', btn:'bg-rose-600 hover:bg-rose-700', keywords:[] }
+};
+
+function detectErrorType(msg) {
+    const lower = (msg || '').toLowerCase();
+    for (const [key, val] of Object.entries(ERROR_TYPES)) {
+        if (key === 'default') continue;
+        if (val.keywords.some(k => lower.includes(k))) return val;
+    }
+    return ERROR_TYPES.default;
+}
+
+function showError(msg, customTitle = null) {
+    document.getElementById('errorIconWrap').className = 'w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5 bg-red-500/20';
+    document.getElementById('errorIcon').className = 'w-7 h-7 text-red-500';
+    document.getElementById('errorModalTitle').textContent = customTitle || detectErrorTitle(msg);
+    document.getElementById('errorModalMsg').textContent = msg || 'Please try again.';
+    document.getElementById('errorModalBtn').className = 'w-full h-11 font-bold text-sm rounded-xl transition-colors mb-3 text-white bg-red-600 hover:bg-red-700';
+    document.getElementById('errorModal').classList.add('show');
+}
+
+function detectErrorTitle(msg) {
+    const m = (msg || '').toLowerCase();
+    if (['limit','daily','too many','quota','free generation'].some(k => m.includes(k))) return 'Limit Reached';
+    if (['login','sign in','auth'].some(k => m.includes(k))) return 'Login Required';
+    if (['youtube','transcript'].some(k => m.includes(k))) return 'YouTube Error';
+    if (['file','pdf','word','docx','image','upload','extract','empty','syllabus'].some(k => m.includes(k))) return 'File Error';
+    if (['date','exam date','future','past'].some(k => m.includes(k))) return 'Date Error';
+    if (['gemini','ai service','generation','unavailable','plan'].some(k => m.includes(k))) return 'AI Service Error';
+    if (['delete','failed'].some(k => m.includes(k))) return 'Delete Error';
+    return 'Something Went Wrong';
+}
+
+function closeErrorModal() {
+    document.getElementById('errorModal').classList.remove('show');
+}
+
+    const html = document.documentElement;
+
+    function toggleTheme() {
+        const isDark = html.classList.contains('dark');
+        html.classList.toggle('dark', !isDark);
+        localStorage.theme = isDark ? 'light' : 'dark';
+    }
+
+    const tabs = ['all','quiz','question','plan'];
+    function switchTab(tab) {
+        tabs.forEach(t => {
+            document.getElementById('section-' + t).classList.toggle('hidden', t !== tab);
+            document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+        });
+    }
+
+    function deletePlan(id) {
+    if (!confirm('This plan will be permanently deleted. Are you sure?')) return;
+    fetch('/study-plan/' + id + '/delete/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) location.reload();
+        else showError(data.error || 'Delete failed. Please try again.');
+    })
+    .catch(() => {
+        showError('Network error. Please check your connection.', 'Connection Error');
+    });
+}
+
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            const loader = document.getElementById('pageLoader');
+            if (loader) loader.classList.add('hide');
+        }, 1800);
+    });
+</script>
+<div id="errorModal" class="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeErrorModal()"></div>
+    <div class="error-modal-box relative bg-white dark:bg-[#1a2035] border border-gray-200 dark:border-slate-700/60 rounded-2xl p-7 max-w-sm w-full shadow-2xl">
+        <div id="errorIconWrap" class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5">
+            <svg id="errorIcon" class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+            </svg>
+        </div>
+        <h3 id="errorModalTitle" class="font-display font-black text-xl text-gray-900 dark:text-white text-center mb-2">Something Went Wrong</h3>
+        <p id="errorModalMsg" class="text-gray-500 dark:text-slate-400 text-sm text-center leading-relaxed mb-6">Please try again.</p>
+        <button id="errorModalBtn" onclick="closeErrorModal()" class="w-full h-11 font-bold text-sm rounded-xl transition-colors mb-3 text-white bg-rose-600">Try Again</button>
+        <button onclick="closeErrorModal()" class="w-full text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 text-sm font-medium transition-colors text-center">Cancel</button>
+    </div>
+</div>
+</body>
+</html>

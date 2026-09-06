@@ -1,0 +1,209 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="icon" type="image/png" href="{% static 'favicon.png' %}">
+    <title>404 — Page Not Found | StudySuite AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
+        .font-display { font-family: 'Syne', sans-serif; }
+        .grid-bg {
+            background-image: linear-gradient(rgba(99,102,241,0.07) 1px,transparent 1px),
+                              linear-gradient(90deg,rgba(99,102,241,0.07) 1px,transparent 1px);
+            background-size: 48px 48px;
+        }
+        .shine-header { border-bottom: 3px solid rgba(0,0,0,0.75) !important; }
+        .dark .shine-header { border-bottom: 3px solid rgba(255,255,255,0.65) !important; }
+        .shine-card { border-top: 2px solid rgba(0,0,0,0.75); border-bottom: 2px solid rgba(0,0,0,0.75); }
+        .dark .shine-card { border-top: 2px solid rgba(255,255,255,0.65); border-bottom: 2px solid rgba(255,255,255,0.65); }
+        .shine-footer { border-top: 3px solid rgba(0,0,0,0.75) !important; }
+.dark .shine-footer { border-top: 3px solid rgba(255,255,255,0.65) !important; }
+
+    </style>
+</head>
+<body class="bg-[#f8fafc] dark:bg-[#090d16] text-gray-900 dark:text-white min-h-screen grid-bg flex flex-col transition-colors duration-300 capitalize">
+
+<!-- HEADER -->
+<header class="sticky top-0 z-50 shine-header bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
+    <div class="w-full px-6 md:px-10 h-16 flex justify-between items-center">
+        <a href="/" class="flex items-center gap-2.5">
+            <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4L2 9l10 5 10-5-10-5z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 11v4c0 2.5 3 4 6 4s6-1.5 6-4v-4"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 9v7"/>
+                </svg>
+            </div>
+            <span class="font-display text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                StudySuite<span class="text-indigo-600 dark:text-indigo-400">AI</span>
+            </span>
+        </a>
+        <div class="flex items-center gap-2 sm:gap-4">
+            <a href="/" class="h-9 px-4 bg-black text-white dark:bg-blue-600 rounded-lg flex items-center gap-2 text-sm font-bold shadow-sm hover:opacity-80 transition-opacity">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h3m-6 0a1 1 0 001-1v-4a1 1 0 00-1-1h-2a1 1 0 00-1 1v4a1 1 0 001 1m6 0h-6"/>
+                </svg>
+                <span class="hidden sm:inline">Home</span>
+            </a>
+            <div class="h-4 w-px bg-slate-200 dark:bg-slate-800"></div>
+            <button onclick="toggleTheme()"
+                    class="relative inline-flex h-9 w-16 items-center justify-between rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-1 cursor-pointer transition-all duration-300 hover:scale-105 focus:outline-none">
+                <span class="absolute top-[3px] left-[3px] h-[28px] w-[28px] rounded-full bg-white dark:bg-blue-600 shadow-md transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform translate-x-0 dark:translate-x-7"></span>
+                <span class="z-10 flex items-center justify-center w-7 h-7 text-amber-500 dark:text-slate-500">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                        d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.243 17.657l.707.707M6.343 4.343l.707-.707M12 7a5 5 0 100 10 5 5 0 000-10z"/></svg>
+                </span>
+                <span class="z-10 flex items-center justify-center w-7 h-7 text-slate-400 dark:text-blue-100">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- MAIN -->
+<main class="flex-grow flex items-center justify-center px-4 sm:px-6 py-12 sm:py-16">
+    <div class="w-full max-w-lg text-center">
+
+        <!-- Floating 404 -->
+        <div class="mb-6 sm:mb-8">
+            <div class="inline-flex w-24 h-24 sm:w-32 sm:h-32 bg-indigo-600 rounded-3xl items-center justify-center shadow-2xl shadow-indigo-500/30 mx-auto">
+                <span class="font-display font-black text-white text-3xl sm:text-4xl">404</span>
+            </div>
+        </div>
+
+        <!-- Text -->
+        <h1 class="font-display font-black text-3xl sm:text-4xl md:text-5xl text-slate-900 dark:text-white mb-3 leading-tight">
+            Page Not Found!
+        </h1>
+        <p class="text-slate-500 dark:text-slate-400 text-sm sm:text-base mb-2 leading-relaxed">
+            The page you’re looking for doesn’t exist or may have been moved.
+        </p>
+        <p class="text-slate-400 dark:text-slate-500 text-xs sm:text-sm mb-8 sm:mb-10">
+            Please check the URL or choose an option below to continue.
+        </p>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row gap-3 justify-center items-center mb-10 sm:mb-12">
+            <a href="/"
+               class="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-11 px-6 bg-black dark:bg-blue-600 text-white font-bold text-sm rounded-xl hover:opacity-80 transition-opacity shadow-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h3m-6 0a1 1 0 001-1v-4a1 1 0 00-1-1h-2a1 1 0 00-1 1v4a1 1 0 001 1m6 0h-6"/>
+                </svg>
+                Go Home
+            </a>
+            <button onclick="history.back()"
+                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-11 px-6 border-2 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-sm rounded-xl hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Go Back
+            </button>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="shine-card bg-white dark:bg-white/5 rounded-2xl p-5 sm:p-6">
+            <p class="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">Or Go To </p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <a href="/quiz-generator/" class="flex items-center gap-3 p-3 rounded-xl bg-indigo-50 dark:bg-indigo-600/10 border border-indigo-100 dark:border-indigo-500/20 hover:border-indigo-400 transition-all group">
+                    <span class="text-xl">🧠</span>
+                    <div class="text-left">
+                        <div class="text-xs font-bold text-slate-800 dark:text-white">MCQ Quiz</div>
+                        <div class="text-[10px] text-slate-400">Create a quiz</div>
+                    </div>
+                </a>
+                <a href="/question-generator/" class="flex items-center gap-3 p-3 rounded-xl bg-indigo-50 dark:bg-indigo-600/10 border border-indigo-100 dark:border-indigo-500/20 hover:border-indigo-400 transition-all">
+                    <span class="text-xl">📝</span>
+                    <div class="text-left">
+                        <div class="text-xs font-bold text-slate-800 dark:text-white">Question Generator</div>
+                        <div class="text-[10px] text-slate-400">Generate questions</div>
+                    </div>
+                </a>
+                <a href="/study-planner/" class="flex items-center gap-3 p-3 rounded-xl bg-indigo-50 dark:bg-indigo-600/10 border border-indigo-100 dark:border-indigo-500/20 hover:border-indigo-400 transition-all">
+                    <span class="text-xl">📅</span>
+                    <div class="text-left">
+                        <div class="text-xs font-bold text-slate-800 dark:text-white">Study Planner</div>
+                        <div class="text-[10px] text-slate-400">Create A Study Plan</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<!-- FOOTER -->
+<footer class="shine-footer border-t border-slate-200/60 dark:border-slate-800/40 bg-white/60 dark:bg-slate-950/40 backdrop-blur-sm relative z-10">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 md:pt-16 pb-6 sm:pb-8">
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-5 sm:gap-8 pb-10 sm:pb-12 border-b border-slate-900/10 dark:border-white/10">
+
+                <div class="col-span-2 md:col-span-2">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center">
+                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4L2 9l10 5 10-5-10-5z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 11v4c0 2.5 3 4 6 4s6-1.5 6-4v-4"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20 9v7"/>
+                            </svg>
+                        </div>
+                        <span class="font-display font-bold text-base text-slate-900 dark:text-white tracking-tight">
+                            StudySuite<span class="text-indigo-600 dark:text-indigo-400">AI</span>
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm">
+                        Making exam preparation simple, fast, and 100% free. Create custom quizzes, practice sheets, and structured smart timetables in under 30 seconds.
+                    </p>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-4">AI Study Tools</h5>
+                    <ul class="space-y-2.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <li><a href="/quiz-generator/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Quiz Generator</a></li>
+                        <li><a href="{% url 'question_generator' %}" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Question Generator</a></li>
+                        <li><a href="/study-planner/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Study Planner</a></li>
+                        <li><a href="/plans/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">History</a></li>
+
+                    </ul>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-4">Platform</h5>
+                    <ul class="space-y-2.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <li><a href="/#features" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Our Features</a></li>
+                        <li><a href="/#about" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">About Us</a></li>
+                        <li><a href="/#terms" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Terms & Rules</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 text-xs font-medium text-slate-400">
+                <div class="flex items-center gap-2">
+                    <p>&copy; 2026 StudySuite AI • All rights reserved.</p>
+                </div>
+            </div>
+
+        </div>
+    </footer>
+
+<script>
+    function toggleTheme() {
+        const isDark = document.documentElement.classList.contains('dark');
+        document.documentElement.classList.toggle('dark', !isDark);
+        localStorage.theme = isDark ? 'light' : 'dark';
+    }
+</script>
+</body>
+</html>

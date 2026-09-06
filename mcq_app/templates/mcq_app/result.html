@@ -1,0 +1,314 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{% static 'favicon.png' %}">
+    <title>Quiz Result — StudySuite AI</title>
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                        display: ['Syne', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { background-color: #f8fafc; }
+        .dark body { background-color: #090d16; }
+
+        /* ── METRIC GRID PATTERN & MESH ── */
+        .grid-pattern {
+            background-image:
+                linear-gradient(rgba(99, 102, 241, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.02) 1px, transparent 1px);
+            background-size: 48px 48px;
+        }
+        .dark .grid-pattern {
+            background-image:
+                linear-gradient(rgba(99, 102, 241, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.04) 1px, transparent 1px);
+        }
+
+        /* ── INTERACTIVE SHINING BORDERS (2px) ── */
+        .dark .shine-card {
+            border-top: 2px solid rgba(255, 255, 255, 0.65) !important;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.65) !important;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0px rgba(255, 255, 255, 0.1);
+        }
+        .shine-card {
+            border-top: 2px solid rgba(0, 0, 0, 0.75) !important;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.75) !important;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.15);
+        }
+
+        .dark .shine-header { border-bottom: 2px solid rgba(255, 255, 255, 0.65) !important; }
+        .shine-header { border-bottom: 2px solid rgba(0, 0, 0, 0.75) !important; }
+
+        .dark .shine-footer { border-top: 2px solid rgba(255, 255, 255, 0.65) !important; }
+        .shine-footer { border-top: 2px solid rgba(0, 0, 0, 0.75) !important; }
+    </style>
+</head>
+<body class="font-sans text-neutral-600 dark:text-slate-400 antialiased min-h-screen flex flex-col justify-between capitalize grid-pattern selection:bg-indigo-100 dark:selection:bg-indigo-500/30 transition-colors duration-300 ">
+
+    <header class="sticky top-0 z-50 shine-header bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
+        <div class="w-full px-6 md:px-10 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4L2 9l10 5 10-5-10-5z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 11v4c0 2.5 3 4 6 4s6-1.5 6-4v-4"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20 9v7"/>
+                    </svg>
+                </div>
+                <span class="font-display text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                    StudySuite<span class="text-indigo-600 dark:text-indigo-400">AI</span>
+                </span>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-4">
+                <a href="/" class="h-9 px-4 bg-black text-white dark:bg-blue-600 rounded-lg flex items-center gap-2 text-sm font-bold shadow-sm" title="Home">
+                    <span>Home</span>
+                    <!-- hidden sm:inline-block class lagayi hai taaki mobile/tablet pe hide ho jaye -->
+                    <svg class="w-4 h-4 hidden sm:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h3m-6 0a1 1 0 001-1v-4a1 1 0 00-1-1h-2a1 1 0 00-1 1v4a1 1 0 001 1m6 0h-6"/>
+                    </svg>
+                </a>
+
+                <div class="h-4 w-px bg-slate-200 dark:bg-slate-800"></div>
+
+                <button onclick="toggleTheme()" type="button"
+                        class="relative inline-flex h-9 w-16 items-center justify-between rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-1 cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 shadow-inner group focus:outline-none"
+                        aria-label="Toggle Theme">
+                    <span class="absolute top-[3px] left-[3px] h-[28px] w-[28px] rounded-full bg-white dark:bg-blue-600 shadow-md transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform translate-x-0 dark:translate-x-7"></span>
+                    <span class="z-10 flex items-center justify-center w-7 h-7 text-amber-500 dark:text-slate-500 transition-colors duration-300">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.243 17.657l.707.707M6.343 4.343l.707.707M12 7a5 5 0 100 10 5 5 0 000-10z"/>
+                        </svg>
+                    </span>
+                    <span class="z-10 flex items-center justify-center w-7 h-7 text-slate-400 dark:text-blue-100 transition-colors duration-300">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl w-full mx-auto px-4 py-12 flex-grow">
+
+        <div class="shine-card bg-white dark:bg-slate-900/40 border-2 border-slate-200 dark:border-transparent rounded-3xl p-8 backdrop-blur-xl text-center mb-12 relative overflow-hidden">
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-full blur-3xl -z-10"></div>
+
+            <div class="relative w-40 h-40 mx-auto mb-6 flex items-center justify-center">
+                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="42" stroke="#1e293b" stroke-width="6" fill="transparent" class="dark:stroke-slate-800/80 stroke-slate-100"/>
+                    <circle cx="50" cy="50" r="42" stroke="url(#scoreGradient)" stroke-width="7" fill="transparent"
+                            stroke-dasharray="263.8" stroke-dashoffset="{{ stroke_dashoffset }}" stroke-linecap="round" class="drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]"/>
+                    <defs>
+                        <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#6366f1"/>
+                            <stop offset="50%" stop-color="#8b5cf6"/>
+                            <stop offset="100%" stop-color="#06b6d4"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <div class="absolute text-center">
+                    <p class="font-display text-4xl font-black text-slate-900 dark:text-white tracking-tight">{{ percentage }}%</p>
+                    <p class="text-[10px] text-indigo-500 dark:text-indigo-400 font-bold uppercase tracking-widest mt-0.5">Overall Score</p>
+                </div>
+            </div>
+
+            <h2 class="font-display text-3xl font-black text-slate-900 dark:text-white tracking-tight">{{ performance }}</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-md mx-auto leading-relaxed">
+                You successfully solved <span class="text-indigo-600 dark:text-indigo-400 font-bold">{{ attempt.score }}</span> out of <span class="text-slate-700 dark:text-slate-300 font-bold">{{ attempt.total_questions }}</span> queries correct
+            </p>
+
+            <div class="grid grid-cols-3 gap-2 sm:gap-4 border-t border-slate-200 dark:border-slate-800/60 mt-8 pt-6">
+                <div class="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-2xl p-3.5 backdrop-blur-md">
+                    <p class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">Correct</p>
+                    <p class="font-display text-2xl font-black text-emerald-700 dark:text-emerald-500">{{ attempt.score|stringformat:"02d" }}</p>
+                </div>
+                <div class="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-2xl p-3.5 backdrop-blur-md">
+                    <p class="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest mb-1">Wrong</p>
+                    <p class="font-display text-2xl font-black text-rose-700 dark:text-rose-500">{{ wrong|stringformat:"02d" }}</p>
+                </div>
+                <div class="bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-3.5 backdrop-blur-md">
+                    <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Complexity</p>
+                    <p class="font-display text-xl font-extrabold text-indigo-600 dark:text-indigo-400 capitalize pt-0.5">{{ attempt.quiz.difficulty }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-6 flex items-center justify-between px-1">
+            <h4 class="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span> Evaluation Sheet
+            </h4>
+            <span class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-3 py-1 rounded-xl border border-indigo-200 dark:border-indigo-500/20 backdrop-blur-md">Verified Key & Explanations</span>
+        </div>
+
+        <div class="space-y-5">
+            {% for review in questions_review %}
+            <div class="shine-card bg-white dark:bg-slate-900/40 border-2 border-slate-200 dark:border-transparent rounded-2xl p-6 relative overflow-hidden transition-all duration-300">
+
+                {% if review.is_correct %}
+                <div class="absolute top-0 right-0 bg-emerald-100 dark:bg-emerald-500/10 border-l border-b border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-black text-[10px] uppercase tracking-wider px-3.5 py-1.5 rounded-bl-xl flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_6px_#34d399]"></span> Passed
+                </div>
+                {% else %}
+                <div class="absolute top-0 right-0 bg-rose-100 dark:bg-rose-500/10 border-l border-b border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-400 font-black text-[10px] uppercase tracking-wider px-3.5 py-1.5 rounded-bl-xl flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500 dark:bg-rose-400 shadow-[0_0_6px_#f43f5e]"></span> Failed
+                </div>
+                {% endif %}
+
+                <div class="flex items-start gap-4 max-w-[85%]">
+                    <span class="flex-shrink-0 w-8 h-8 bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-200 font-bold rounded-xl flex items-center justify-center text-sm border-2 border-slate-200 dark:border-slate-800/80 shadow-inner">
+                        {{ review.number|stringformat:"02d" }}
+                    </span>
+                    <h3 class="text-base font-semibold text-slate-900 dark:text-slate-100 pt-1 leading-relaxed tracking-wide">
+                        {{ review.question_text }}
+                    </h3>
+                </div>
+
+                <div class="mt-5 space-y-2.5 pl-0 sm:pl-12">
+                    {% if review.is_correct %}
+                    <div class="flex items-center gap-3 px-4 py-3.5 border-2 border-emerald-200 dark:border-emerald-500/30 rounded-xl text-sm font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 backdrop-blur-md">
+                        <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l5-5z" clip-rule="evenodd"/>
+                        </svg>
+                        <span class="text-slate-700 dark:text-slate-200"><span class="text-emerald-600 dark:text-emerald-400 font-bold mr-1">{{ review.user_answer }}.</span> {{ review.user_answer_text }}</span>
+                        <span class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400/70 ml-auto bg-emerald-100 dark:bg-emerald-500/5 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-500/10">Your Answer Match</span>
+                    </div>
+                    {% else %}
+                    <div class="flex items-center gap-3 px-4 py-3.5 border-2 border-rose-200 dark:border-rose-500/30 rounded-xl text-sm font-semibold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 backdrop-blur-md">
+                        <svg class="w-5 h-5 text-rose-600 dark:text-rose-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                  clip-rule="evenodd"/>
+                        </svg>
+                        <span class="text-slate-700 dark:text-slate-300">
+                            {% if review.user_answer %}<span class="text-rose-600 dark:text-rose-400 font-bold mr-1">{{ review.user_answer }}.</span> {{ review.user_answer_text }}{% else %}Not Answered (Skipped Case){% endif %}
+                        </span>
+                        <span class="text-[11px] font-medium text-rose-600 dark:text-rose-400/70 ml-auto bg-rose-100 dark:bg-rose-500/5 px-2 py-0.5 rounded-md border border-rose-200 dark:border-rose-500/10">Your Choice</span>
+                    </div>
+
+                    <div class="flex items-center gap-3 px-4 py-3.5 border-2 border-emerald-200 dark:border-emerald-500/20 rounded-xl text-sm font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-500/5 backdrop-blur-md">
+                        <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="text-slate-700 dark:text-slate-200"><span class="text-emerald-600 dark:text-emerald-400 font-bold mr-1">{{ review.correct_answer }}.</span> {{ review.correct_answer_text }}</span>
+                        <span class="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 ml-auto uppercase tracking-wider bg-emerald-100 dark:bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-500/20">Correct Key</span>
+                    </div>
+                    {% endif %}
+
+                    {% if review.explanation %}
+                    <div class="flex items-start gap-3 px-4 py-3.5 bg-indigo-50 dark:bg-indigo-500/5 border-2 border-indigo-100 dark:border-indigo-500/10 rounded-xl mt-2 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 bottom-0 w-1 bg-indigo-500/60 dark:bg-indigo-500/60"></div>
+                        <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium"><span class="text-indigo-600 dark:text-indigo-400 font-bold">Deep Context:</span> {{ review.explanation }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="mt-12 pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a href="/quiz-generator/"
+               class="w-full sm:w-auto text-center border-2 border-black text-black dark:border-blue-600 dark:text-white bg-transparent font-bold h-9 px-4 rounded-lg shadow-sm text-sm flex items-center justify-center">
+    Retake Another Quiz
+</a>
+
+            <button onclick="window.print()"
+                    class="w-full sm:w-auto bg-black text-white dark:bg-blue-600 font-bold h-9 px-4 rounded-lg shadow-md flex items-center justify-center gap-2 text-sm">
+                <!-- hidden sm:inline-block class lagayi hai taaki mobile/tablet pe hide ho jaye -->
+                <svg class="w-4 h-4 stroke-[2.5] hidden sm:inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l3-3m-3 3l-3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                Download Score Report
+            </button>
+        </div>
+    </main>
+
+    <footer class="shine-footer border-t border-slate-200/60 dark:border-slate-800/40 bg-white/60 dark:bg-slate-950/40 backdrop-blur-sm relative z-10">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 md:pt-16 pb-6 sm:pb-8">
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-5 sm:gap-8 pb-10 sm:pb-12 border-b border-slate-900/10 dark:border-white/10">
+
+                <div class="col-span-2 md:col-span-2">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center">
+                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4L2 9l10 5 10-5-10-5z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 11v4c0 2.5 3 4 6 4s6-1.5 6-4v-4"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20 9v7"/>
+                            </svg>
+                        </div>
+                        <span class="font-display font-bold text-base text-slate-900 dark:text-white tracking-tight">
+                            StudySuite<span class="text-indigo-600 dark:text-indigo-400">AI</span>
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm">
+                        Making exam preparation simple, fast, and 100% free. Create custom quizzes, practice sheets, and structured smart timetables in under 30 seconds.
+                    </p>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-4">AI Study Tools</h5>
+                    <ul class="space-y-2.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <li><a href="/quiz-generator/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Quiz Generator</a></li>
+                        <li><a href="{% url 'question_generator' %}" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Question Generator</a></li>
+                        <li><a href="/study-planner/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Study Planner</a></li>
+                        <li><a href="/plans/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">History</a></li>
+
+                    </ul>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-4">Platform</h5>
+                    <ul class="space-y-2.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <li><a href="/#features" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Our Features</a></li>
+                        <li><a href="/#about" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">About Us</a></li>
+                        <li><a href="/#terms" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Terms & Rules</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 text-xs font-medium text-slate-400">
+                <div class="flex items-center gap-2">
+                    <p>&copy; 2026 StudySuite AI • All rights reserved.</p>
+                </div>
+            </div>
+
+        </div>
+    </footer>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+            html.classList.toggle('dark', !isDark);
+            localStorage.theme = isDark ? 'light' : 'dark';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1157 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{% static 'favicon.png' %}">
+    <title>AI Study Planner - StudySuite AI</title>
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                        display: ['Syne', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { background-color: #f8fafc; }
+        .dark body { background-color: #090d16; }
+
+        /* ── METRIC GRID PATTERN & MESH ── */
+        .grid-pattern {
+            background-image:
+                linear-gradient(rgba(99, 102, 241, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.02) 1px, transparent 1px);
+            background-size: 48px 48px;
+        }
+        .dark .grid-pattern {
+            background-image:
+                linear-gradient(rgba(99, 102, 241, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.04) 1px, transparent 1px);
+        }
+
+        .tab-content { display: none; animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── INTERACTIVE SHINING BORDERS ── */
+        .dark .shine-card {
+            border-top: 3px solid rgba(255, 255, 255, 0.65) !important;
+            border-bottom: 3px solid rgba(255, 255, 255, 0.65) !important;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0px rgba(255, 255, 255, 0.1);
+        }
+        .shine-card {
+            border-top: 3px solid rgba(0, 0, 0, 0.75) !important;
+            border-bottom: 3px solid rgba(0, 0, 0, 0.75) !important;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.15);
+        }
+
+        .dark .shine-header { border-bottom: 3px solid rgba(255, 255, 255, 0.65) !important; }
+        .shine-header { border-bottom: 3px solid rgba(0, 0, 0, 0.75) !important; }
+
+        .dark .shine-footer { border-top: 3px solid rgba(255, 255, 255, 0.65) !important; }
+        .shine-footer { border-top: 3px solid rgba(0, 0, 0, 0.75) !important; }
+
+        /* ── RUNTIME RUNNING INITIALIZERS ── */
+        #pageLoader {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        .dark #pageLoader { background: #090d16; }
+        #pageLoader.hide { opacity: 0; visibility: hidden; }
+
+        @keyframes logoPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(99,102,241,0.4); }
+            50% { transform: scale(1.06); box-shadow: 0 0 0 12px rgba(99,102,241,0); }
+        }
+        .logo-pulse { animation: logoPulse 1.5s ease infinite; }
+
+        @keyframes dotBounce {
+            0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+            40% { transform: translateY(-6px); opacity: 1; }
+        }
+        .dot-1 { animation: dotBounce 1.2s ease infinite 0s; }
+        .dot-2 { animation: dotBounce 1.2s ease infinite 0.2s; }
+        .dot-3 { animation: dotBounce 1.2s ease infinite 0.4s; }
+
+        @keyframes progressFill { from { width: 0%; } to { width: 100%; } }
+        #loaderProgress { animation: progressFill 1.8s ease-out forwards; }
+
+        /* ── PIPELINE LOADING OVERLAY ── */
+        #generateOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9998;
+            background: rgba(9, 13, 22, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            align-items: center;
+            justify-content: center;
+        }
+        #generateOverlay.show { display: flex; }
+
+        @keyframes spinRing { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .spin-ring { animation: spinRing 1s linear infinite; }
+
+        @keyframes textFade {
+            0%, 100% { opacity: 1; transform: translateY(0); }
+            45% { opacity: 0; transform: translateY(-4px); }
+            50% { opacity: 0; transform: translateY(4px); }
+            55% { opacity: 1; transform: translateY(0); }
+        }
+        .msg-animate { animation: textFade 3s ease infinite; }
+
+        @keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+        .shimmer-bg {
+            background: linear-gradient(90deg, transparent 25%, rgba(99,102,241,0.06) 50%, transparent 75%);
+            background-size: 400px 100%;
+            animation: shimmer 2.5s ease infinite;
+        }
+
+        :root { --spin-1: #000000; --spin-2: #374151; }
+        .dark { --spin-1: #2563eb; --spin-2: #60a5fa; }
+
+        /* ═══ ERROR MODAL ═══ */
+#errorModal { display:none; }
+#errorModal.show { display:flex; }
+@keyframes modalIn {
+    from { opacity:0; transform:scale(0.92) translateY(10px); }
+    to   { opacity:1; transform:scale(1) translateY(0); }
+}
+.error-modal-box { animation: modalIn 0.22s cubic-bezier(0.16,1,0.3,1) forwards; }
+
+
+    </style>
+</head>
+<body class="font-sans text-neutral-600 dark:text-slate-400 antialiased min-h-screen flex flex-col justify-between capitalize grid-pattern selection:bg-indigo-100 dark:selection:bg-indigo-500/30 transition-colors duration-300">
+
+    <div id="pageLoader">
+        <div class="logo-pulse w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-indigo-500/20">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4L2 9l10 5 10-5-10-5z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 11v4c0 2.5 3 4 6 4s6-1.5 6-4v-4"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20 9v7"/>
+            </svg>
+        </div>
+        <h2 class="font-display text-2xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">
+            StudySuite<span class="text-indigo-600 dark:text-indigo-400">AI</span>
+        </h2>
+        <p class="text-xs font-medium tracking-wide text-slate-400 dark:text-slate-500 mb-6 uppercase">Initializing Planner Engines...</p>
+        <div class="flex items-center gap-1.5 mb-5">
+            <div class="dot-1 w-2.5 h-2.5 bg-indigo-600 rounded-full"></div>
+            <div class="dot-2 w-2.5 h-2.5 bg-indigo-400 rounded-full"></div>
+            <div class="dot-3 w-2.5 h-2.5 bg-cyan-400 rounded-full"></div>
+        </div>
+        <div class="w-40 h-1 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div id="loaderProgress" class="h-full bg-indigo-600 rounded-full"></div>
+        </div>
+    </div>
+
+    <div id="generateOverlay">
+        <div class="shine-card shimmer-bg bg-white dark:bg-slate-950 border border-slate-200 dark:border-transparent rounded-2xl p-8 text-center max-w-sm mx-4 w-full relative overflow-hidden">
+            <div class="relative w-16 h-16 mx-auto mb-5 flex items-center justify-center">
+                <svg class="spin-ring absolute inset-0 w-full h-full" viewBox="0 0 80 80">
+                    <circle cx="40" cy="40" r="34" stroke="#f1f5f9" stroke-width="3.5" fill="none" class="dark:hidden"/>
+                    <circle cx="40" cy="40" r="34" stroke="#0f172a" stroke-width="3.5" fill="none" class="hidden dark:block"/>
+                    <circle cx="40" cy="40" r="34" stroke="url(#spinGrad)" stroke-width="3.5" fill="none" stroke-dasharray="70 130" stroke-linecap="round"/>
+                    <defs>
+                        <linearGradient id="spinGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="var(--spin-1)"/>
+                            <stop offset="100%" stop-color="var(--spin-2)"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4L2 9l10 5 10-5-10-5z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 11v4c0 2.5 3 4 6 4s6-1.5 6-4v-4"/>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M20 9v7"/>
+    </svg>
+</div>
+            </div>
+
+            <h3 id="generateTitle" class="msg-animate font-display text-lg font-bold text-slate-900 dark:text-white mb-1">Analyzing Syllabus...</h3>
+            <p id="generateMsg" class="text-xs text-slate-500 dark:text-slate-400 mb-6">Breaking down topics & chapters</p>
+
+            <div class="space-y-2 text-left">
+                <div id="step1" class="flex items-center gap-3 px-3 py-2 rounded-xl bg-black/5 dark:bg-blue-600/10 border border-black/10 dark:border-blue-500/20">
+                    <div class="w-5 h-5 rounded-full bg-black dark:bg-blue-600 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                                                                      clip-rule="evenodd"/></svg>
+                    </div>
+                    <span class="text-xs font-semibold text-black dark:text-blue-300">Data constraints received</span>
+                </div>
+                <div id="step2" class="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/60 opacity-40 transition-all duration-300">
+                    <div class="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center flex-shrink-0"><div class="w-1.5 h-1.5 rounded-full bg-slate-400"></div></div>
+                    <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Calculating time blocks</span>
+                </div>
+                <div id="step3" class="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/60 opacity-40 transition-all duration-300">
+                    <div class="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center flex-shrink-0"><div class="w-1.5 h-1.5 rounded-full bg-slate-400"></div></div>
+                    <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Optimizing daily goals</span>
+                </div>
+                <div id="step4" class="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/60 opacity-40 transition-all duration-300">
+                    <div class="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center flex-shrink-0"><div class="w-1.5 h-1.5 rounded-full bg-slate-400"></div></div>
+                    <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Building your schedule</span>
+                </div>
+            </div>
+            <p class="text-[10px] tracking-wide text-slate-400 dark:text-slate-600 mt-5 uppercase font-medium">Processing Time: 40-60 seconds so Please wait.</p>
+        </div>
+    </div>
+
+    <header class="sticky top-0 z-50 shine-header bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
+        <div class="w-full px-6 md:px-10 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4L2 9l10 5 10-5-10-5z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 11v4c0 2.5 3 4 6 4s6-1.5 6-4v-4"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20 9v7"/>
+                    </svg>
+                </div>
+                <span class="font-display text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                    StudySuite<span class="text-indigo-600 dark:text-indigo-400">AI</span>
+                </span>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-4">
+
+                <a href="/" class="h-9 px-4 bg-black text-white dark:bg-blue-600 rounded-lg flex items-center gap-2 text-sm font-bold shadow-sm" title="Home">
+    <span>Home</span>
+    <svg class="w-4 h-4 hidden sm:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h3m-6 0a1 1 0 001-1v-4a1 1 0 00-1-1h-2a1 1 0 00-1 1v4a1 1 0 001 1m6 0h-6"/>
+                    </svg>
+</a>
+
+                <div class="h-4 w-px bg-slate-200 dark:bg-slate-800"></div>
+
+                <button onclick="toggleTheme()" type="button"
+                        class="relative inline-flex h-9 w-16 items-center justify-between rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-1 cursor-pointer shadow-inner group focus:outline-none"
+                        aria-label="Toggle Theme">
+
+    <span class="absolute top-[3px] left-[3px] h-[28px] w-[28px] rounded-full bg-white dark:bg-blue-600 shadow-md transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform translate-x-0 dark:translate-x-7"></span>
+
+    <span class="z-10 flex items-center justify-center w-7 h-7 text-amber-500 dark:text-slate-500 transition-colors duration-300">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.243 17.657l.707.707M6.343 4.343l.707.707M12 7a5 5 0 100 10 5 5 0 000-10z"/>
+        </svg>
+    </span>
+
+    <span class="z-10 flex items-center justify-center w-7 h-7 text-slate-400 dark:text-blue-100 transition-colors duration-300">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+        </svg>
+    </span>
+</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 lg:py-16 flex-grow flex flex-col justify-center">
+
+        <div class="text-center mb-12">
+            <h1 class="font-display text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-none mb-4">
+                AI Exam Study Planner
+            </h1>
+            <p class="text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-xl mx-auto leading-relaxed">
+                Upload your syllabus, set your exam date, and let AI generate a perfectly structured daily study schedule optimized for your success.
+            </p>
+        </div>
+
+        <div class="shine-card bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-transparent rounded-2xl overflow-hidden backdrop-blur-xl">
+            <div class="flex border-b border-slate-100 dark:border-slate-800/60 p-2 bg-slate-50 dark:bg-slate-950/40 gap-1.5">
+    <!-- Upload Syllabus Button -->
+    <button type="button" onclick="switchTab('file')" id="tab-file"
+            class="tab-btn flex-1 h-9 px-4 rounded-lg text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 bg-black text-white dark:bg-blue-600">
+    <svg class="w-4 h-4 hidden sm:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+    </svg>
+    Upload Syllabus
+</button>
+                <!-- Paste Topics Button -->
+    <button type="button" onclick="switchTab('text')" id="tab-text"
+            class="tab-btn flex-1 h-9 px-4 rounded-lg text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400">
+    <svg class="w-4 h-4 hidden sm:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/>
+    </svg>
+    Paste Topics
+</button>
+</div>
+
+            <form method="POST" enctype="multipart/form-data" class="p-6 space-y-6" id="mainForm">
+                {% csrf_token %}
+                <input type="hidden" name="input_type" id="inputType" value="file">
+
+                <div id="content-file" class="tab-content active">
+                    <div id="uploadZone"
+                         onclick="document.getElementById('fileInput').click()"
+                         class="border-2 border-dashed border-slate-200 dark:border-slate-800
+            hover:border-indigo-500 dark:hover:border-indigo-500/50
+            bg-slate-50/50 dark:bg-slate-950/20
+            rounded-xl overflow-hidden cursor-pointer
+            transition-all duration-300 group">
+
+    <!-- Default state — koi file nahi -->
+    <div id="uploadDefault" class="p-8 text-center">
+        <div class="w-11 h-11 bg-slate-100 dark:bg-slate-800 text-indigo-600
+                    dark:text-indigo-400 rounded-xl flex items-center justify-center
+                    mx-auto mb-4 group-hover:scale-105 transition-all duration-300">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
+                 viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+            </svg>
+        </div>
+        <p class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            Drag & drop syllabus file, or
+            <span class="text-indigo-600 dark:text-indigo-400 font-semibold
+                         group-hover:underline">browse</span>
+        </p>
+        <p class="text-xs text-slate-400 dark:text-slate-500">
+            PDF, Word (.docx) or Images up to 50MB
+        </p>
+    </div>
+
+                        <!-- Image preview state -->
+    <div id="imagePreviewState" class="hidden relative">
+        <img id="imagePreview"
+             src="" alt="Uploaded syllabus"
+             class="w-full max-h-64 object-contain bg-slate-100 dark:bg-slate-900">
+        <!-- Overlay on hover -->
+        <div class="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100
+                    transition-opacity duration-200 flex flex-col items-center
+                    justify-center gap-2">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor"
+                 stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+            </svg>
+            <span class="text-white text-xs font-semibold">Change Image</span>
+        </div>
+        <!-- File info bar -->
+        <div id="imageInfoBar"
+             class="flex items-center justify-between px-4 py-2.5
+                    bg-indigo-600 dark:bg-indigo-700">
+            <div class="flex items-center gap-2 min-w-0">
+                <svg class="w-4 h-4 text-indigo-200 flex-shrink-0" fill="none"
+                     stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span id="imageFileName"
+                      class="text-xs font-semibold text-white truncate max-w-[200px]">
+                </span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="imageFileSize"
+                      class="text-[10px] font-medium text-indigo-200 flex-shrink-0">
+                </span>
+                <div class="flex items-center gap-1 bg-emerald-500 px-2 py-0.5 rounded-full">
+                    <svg class="w-2.5 h-2.5 text-white" fill="currentColor"
+                         viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clip-rule="evenodd"/>
+                    </svg>
+                    <span class="text-[10px] font-black text-white">Ready</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+                        <!-- PDF / DOCX file state -->
+    <div id="docFileState" class="hidden p-5">
+        <div class="flex items-center gap-4">
+            <div id="docIcon"
+                 class="w-12 h-12 rounded-xl flex items-center justify-center
+                         flex-shrink-0 bg-red-100 dark:bg-red-500/10">
+                <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor"
+                     stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p id="docFileName"
+                   class="text-sm font-bold text-slate-800 dark:text-slate-200
+                          truncate normal-case"></p>
+                <p id="docFileSize"
+                   class="text-xs text-slate-400 dark:text-slate-500 mt-0.5"></p>
+                <div class="flex items-center gap-1.5 mt-1.5">
+                    <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                    <span class="text-[11px] font-semibold text-emerald-600
+                                 dark:text-emerald-400">File ready to process</span>
+                </div>
+            </div>
+            <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-emerald-100 dark:bg-emerald-500/10 rounded-full
+                            flex items-center justify-center">
+                    <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400"
+                         fill="none" stroke="currentColor" stroke-width="2.5"
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M5 13l4 4L19 7"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        <p class="text-[10px] text-slate-400 mt-3 text-center normal-case">
+            Click to change file
+        </p>
+    </div>
+
+    <input type="file" name="syllabus_file" class="hidden" id="fileInput"
+           accept=".pdf,.docx,.doc,image/*" onchange="displayFileName()">
+</div>
+                </div>
+
+                <div id="content-text" class="tab-content">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Paste Course Topics</label>
+                    <textarea name="syllabus_text" rows="5" placeholder="List Your Chapters, Units, Or Topics Here..."
+                              class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all resize-none"></textarea>
+                </div>
+
+                <!-- NEW: STUDY PLANNER PARAMS -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-2">
+                    <div>
+    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Exam Date</label>
+    <input type="date" name="exam_date" required min="{{ today_date }}" onchange="checkUrgency(this.value)"
+           class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all dark:[color-scheme:dark] accent-indigo-600 dark:accent-indigo-500">
+</div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Daily Study Hours</label>
+                        <select name="daily_hours"
+                                class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all">
+                            <option value="2">2 Hours / Day</option>
+                            <option value="4" selected>4 Hours / Day</option>
+                            <option value="6">6 Hours / Day</option>
+                            <option value="8">8+ Hours / Day (Intense)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Exam Format</label>
+                        <select name="exam_format"
+                                class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all">
+                            <option value="mcq">MCQ / Objective</option>
+                            <option value="subjective">Subjective / Theory</option>
+                            <option value="mixed" selected>Mixed (Both)</option>
+                            <option value="practical">Practical / Coding</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Target Goal</label>
+                        <select name="target_score"
+                                class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all">
+                            <option value="pass">Just Pass (Clear basics)</option>
+                            <option value="good" selected>Good Score (75-85%)</option>
+                            <option value="excellent">Top Ranker (90%+)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Weekly Rest Days</label>
+                        <select name="rest_days"
+                                class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all">
+                            <option value="0">No Rest Days (Intense)</option>
+                            <option value="1" selected>1 Day / Week</option>
+                            <option value="2">2 Days / Week (Relaxed)</option>
+                        </select>
+                    </div>
+                    <div>
+    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Total Exam Marks</label>
+    <input type="number" name="total_marks" placeholder="E.G. 50, 100, 200..." required
+           class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all">
+</div>
+
+                    <div>
+    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+        Subject / Exam Name
+    </label>
+    <input type="text" name="subject_name"
+           placeholder="E.g. Physics, UPSC, JEE Math..."
+           class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all">
+</div>
+                    <!-- Language (Updated to match other fields) -->
+<div>
+    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+        Output Language
+    </label>
+    <select name="language"
+            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all">
+        <option value="english" selected>Auto ( English )</option>
+        <option value="hindi">Hindi</option>
+        <option value="gujarati">Gujarati</option>
+        <option value="tamil">Tamil</option>
+        <option value="telugu">Telugu</option>
+        <option value="marathi">Marathi</option>
+        <option value="punjabi">Punjabi</option>
+        <option value="bengali">Bengali</option>
+        <option value="urdu">Urdu</option>
+        <option value="spanish">Spanish</option>
+        <option value="arabic">Arabic</option>
+        <option value="french">French</option>
+        <option value="portuguese">Portuguese</option>
+        <option value="russian">Russian</option>
+        <option value="indonesian">Indonesian</option>
+        <option value="japanese">Japanese</option>
+        <option value="german">German</option>
+        <option value="korean">Korean</option>
+        <option value="turkish">Turkish</option>
+        <option value="vietnamese">Vietnamese</option>
+        <option value="italian">Italian</option>
+        <option value="chinese">Mandarin Chinese</option>
+        <option value="persian">Persian</option>
+        <option value="swahili">Swahili</option>
+        <option value="dutch">Dutch</option>
+    </select>
+</div>
+                </div>
+
+                <button type="submit" id="generateBtn"
+                        class="w-full mt-4 bg-black dark:bg-blue-600 text-white font-bold h-9 px-4 rounded-lg flex items-center justify-center gap-2 text-sm shadow-sm">
+    <svg class="w-5 h-5 hidden sm:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+    </svg>
+    Generate Study Plan
+</button>
+            </form>
+        </div>
+    </main>
+
+    <footer class="shine-footer border-t border-slate-200/60 dark:border-slate-800/40 bg-white/60 dark:bg-slate-950/40 backdrop-blur-sm relative z-10">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 md:pt-16 pb-6 sm:pb-8">
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-5 sm:gap-8 pb-10 sm:pb-12 border-b border-slate-900/10 dark:border-white/10">
+
+                <div class="col-span-2 md:col-span-2">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center">
+                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4L2 9l10 5 10-5-10-5z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 11v4c0 2.5 3 4 6 4s6-1.5 6-4v-4"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20 9v7"/>
+                            </svg>
+                        </div>
+                        <span class="font-display font-bold text-base text-slate-900 dark:text-white tracking-tight">
+                            StudySuite<span class="text-indigo-600 dark:text-indigo-400">AI</span>
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm">
+                        Making exam preparation simple, fast, and 100% free. Create custom quizzes, practice sheets, and structured smart timetables in under 30 seconds.
+                    </p>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-4">AI Study Tools</h5>
+                    <ul class="space-y-2.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <li><a href="/quiz-generator/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Quiz Generator</a></li>
+                        <li><a href="{% url 'question_generator' %}" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Question Generator</a></li>
+                        <li><a href="/study-planner/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Study Planner</a></li>
+                        <li><a href="/plans/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">History</a></li>
+
+                    </ul>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-4">Platform</h5>
+                    <ul class="space-y-2.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <li><a href="/#features" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Our Features</a></li>
+                        <li><a href="/#about" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">About Us</a></li>
+                        <li><a href="/#terms" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Terms & Rules</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 text-xs font-medium text-slate-400">
+                <div class="flex items-center gap-2">
+                    <p>&copy; 2026 StudySuite AI • All rights reserved.</p>
+                </div>
+            </div>
+
+        </div>
+    </footer>
+
+    <script>
+
+        // ═══ SMART ERROR MODAL ═══
+const ERROR_TYPES = {
+    limit: {
+        title: 'Daily Limit Reached',
+        icon: 'bg-orange-500/20', iconColor: 'text-orange-400',
+        btn: 'bg-orange-600 hover:bg-orange-700',
+        keywords: ['limit', 'daily', 'too many', 'quota', 'requests', 'free generation']
+    },
+    auth: {
+        title: 'Login Required',
+        icon: 'bg-blue-500/20', iconColor: 'text-blue-400',
+        btn: 'bg-blue-600 hover:bg-blue-700',
+        keywords: ['login', 'sign in', 'auth', 'unauthorized']
+    },
+    youtube: {
+        title: 'YouTube Error',
+        icon: 'bg-red-500/20', iconColor: 'text-red-400',
+        btn: 'bg-red-600 hover:bg-red-700',
+        keywords: ['youtube', 'transcript', 'video', 'url']
+    },
+    file: {
+        title: 'File Error',
+        icon: 'bg-amber-500/20', iconColor: 'text-amber-400',
+        btn: 'bg-amber-600 hover:bg-amber-700',
+        keywords: ['file', 'pdf', 'word', 'docx', 'image', 'upload', 'extract', 'empty', 'text', 'syllabus', 'content', 'paste', 'select']
+    },
+    date: {
+        title: 'Date Error',
+        icon: 'bg-cyan-500/20', iconColor: 'text-cyan-400',
+        btn: 'bg-cyan-600 hover:bg-cyan-700',
+        keywords: ['date', 'exam date', 'future', 'invalid date', 'past']
+    },
+    ai: {
+        title: 'AI Service Error',
+        icon: 'bg-purple-500/20', iconColor: 'text-purple-400',
+        btn: 'bg-purple-600 hover:bg-purple-700',
+        keywords: ['gemini', 'ai service', 'generation failed', 'unavailable', 'plan generation', 'regenerate', 'failed to']
+    },
+    date: {
+    title: 'Date Error',
+    icon: 'bg-cyan-500/20',
+    iconColor: 'text-cyan-400',
+    btn: 'bg-cyan-600 hover:bg-cyan-700',
+    keywords: ['date', 'exam date', 'future', 'invalid date', 'past']
+},
+    default: {
+        title: 'Something Went Wrong',
+        icon: 'bg-rose-500/20', iconColor: 'text-rose-400',
+        btn: 'bg-rose-600 hover:bg-rose-700',
+        keywords: []
+    }
+};
+
+function detectErrorType(msg) {
+    const lower = (msg || '').toLowerCase();
+    for (const [key, val] of Object.entries(ERROR_TYPES)) {
+        if (key === 'default') continue;
+        if (val.keywords.some(k => lower.includes(k))) return val;
+    }
+    return ERROR_TYPES.default;
+}
+
+function showError(msg, customTitle = null) {
+    document.getElementById('errorIconWrap').className = 'w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5 bg-red-500/20';
+    document.getElementById('errorIcon').className = 'w-7 h-7 text-red-500';
+    document.getElementById('errorModalTitle').textContent = customTitle || detectErrorTitle(msg);
+    document.getElementById('errorModalMsg').textContent = msg || 'Please try again.';
+    document.getElementById('errorModalBtn').className = 'w-full h-11 font-bold text-sm rounded-xl transition-colors mb-3 text-white bg-red-600 hover:bg-red-700';
+    document.getElementById('errorModal').classList.add('show');
+}
+
+function detectErrorTitle(msg) {
+    const m = (msg || '').toLowerCase();
+    if (['daily limit','too many','quota','free generation','limit reached'].some(k => m.includes(k))) return 'Limit Reached';
+    if (['login','sign in','auth'].some(k => m.includes(k))) return 'Login Required';
+    if (['youtube','transcript'].some(k => m.includes(k))) return 'YouTube Error';
+    if (['file','pdf','word','docx','image','upload','extract','empty','syllabus'].some(k => m.includes(k))) return 'File Error';
+    if (['date','exam date','future','past'].some(k => m.includes(k))) return 'Date Error';
+    if (['gemini','ai service','generation','unavailable','plan'].some(k => m.includes(k))) return 'AI Service Error';
+    if (['delete','failed'].some(k => m.includes(k))) return 'Delete Error';
+    return 'Something Went Wrong';
+}
+
+function closeErrorModal() {
+    document.getElementById('errorModal').classList.remove('show');
+}
+
+        // ── 1. PAGE LOAD HANDLER ──
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('pageLoader').classList.add('hide');
+            }, 2000);
+        });
+
+        // ── 2. DYNAMIC GENERATE OVERLAY SCHEDULER ──
+        const generateMessages = [
+            { title: "Analyzing Syllabus...",     msg: "Breaking down topics & chapters" },
+            { title: "Calculating Time...",       msg: "Mapping days left until exam" },
+            { title: "Structuring Plan...",       msg: "Allocating hours to difficult subjects" },
+            { title: "Adding Breaks...",          msg: "Applying Pomodoro optimizations" },
+            { title: "Almost Ready...",           msg: "Finalizing your daily schedule ✨" },
+        ];
+
+        const stepIds = ['step2', 'step3', 'step4'];
+        let msgInterval, stepInterval;
+
+        function activateStep(stepId) {
+            const el = document.getElementById(stepId);
+            if (!el) return;
+            el.classList.remove('opacity-40');
+            el.classList.remove('bg-slate-50', 'dark:bg-slate-900/40', 'border-slate-200', 'dark:border-slate-800/60');
+            el.classList.add('bg-black/5', 'dark:bg-blue-600/10', 'border-black/10', 'dark:border-blue-500/20');
+
+            const dot = el.querySelector('.rounded-full.border-2');
+            if (dot) {
+                dot.outerHTML = `<div class="w-5 h-5 rounded-full bg-black dark:bg-blue-600 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                </div>`;
+            }
+            const label = el.querySelector('span');
+            if (label) {
+                label.classList.remove('text-slate-500', 'dark:text-slate-400');
+                label.classList.add('text-black', 'dark:text-blue-300', 'font-semibold');
+            }
+        }
+
+        function showGenerateOverlay() {
+            document.getElementById('generateOverlay').classList.add('show');
+            let msgIndex = 0;
+            let stepIndex = 0;
+
+            msgInterval = setInterval(() => {
+                msgIndex = (msgIndex + 1) % generateMessages.length;
+                document.getElementById('generateTitle').textContent = generateMessages[msgIndex].title;
+                document.getElementById('generateMsg').textContent = generateMessages[msgIndex].msg;
+            }, 3000);
+
+            stepInterval = setInterval(() => {
+                if (stepIndex < stepIds.length) {
+                    activateStep(stepIds[stepIndex]);
+                    stepIndex++;
+                } else {
+                    clearInterval(stepInterval);
+                }
+            }, 4000);
+        }
+
+        function hideGenerateOverlay() {
+            clearInterval(msgInterval);
+            clearInterval(stepInterval);
+            document.getElementById('generateOverlay').classList.remove('show');
+        }
+
+        // ── 3. ASYNC FORM INTERACTOR PIPELINE ──
+        document.getElementById('mainForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Urgency check block hone par disabled fields submit nahi hote, isliye unhe temporary enable karein
+            const hoursSelect  = document.querySelector('[name="daily_hours"]');
+            const restSelect   = document.querySelector('[name="rest_days"]');
+            if (hoursSelect) hoursSelect.disabled = false;
+            if (restSelect)  restSelect.disabled  = false;
+
+            showGenerateOverlay();
+
+            const startTime = Date.now();
+            const MIN_LOADING_MS = 12000;
+
+            let redirectUrl = null;
+            let errorMsg = null;
+
+            try {
+                // Form Data initialize karein (is se saare inputs auto-detect hote hain)
+                const formData = new FormData(this);
+
+                // 🔥 CRITICAL FIX FOR FILE UPLOAD:
+                // File input element ko target karke explicit file aur sahi key name insert karna
+                const fileInput = document.getElementById('fileInput');
+                const inputType = document.getElementById('inputType').value;
+
+                if (inputType === 'file' && fileInput && fileInput.files.length > 0) {
+                    // Views.py ko 'syllabus_file' naam ki key chahiye, hum yahan wahi set kar rahe hain
+                    formData.set('syllabus_file', fileInput.files[0]);
+                }
+
+                // API request to Django backend
+                const response = await fetch('/study-planner/', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                        // NOTE: Yahan Content-Type header manually nahi likhna hai, Fetch khud hi Boundary set karega
+                    },
+                    body: formData
+                });
+
+                const rawText = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(rawText);
+                } catch(parseErr) {
+                    errorMsg = 'Server returned an unexpected response. Please try again.';
+                }
+
+                if (data) {
+    if (data.force_login) {
+    hideGenerateOverlay();  // overlay band karo pehle
+    showLoginModal(data.login_url);
+    return;
+}
+    if (response.status === 429) {
+        errorMsg = '⏱️ ' + data.error;
+    } else if (data.redirect_url) {
+        redirectUrl = data.redirect_url;
+    } else if (data.error) {
+        errorMsg = data.error;
+    }
+}
+            } catch (fetchErr) {
+                errorMsg = 'Network error: ' + fetchErr.message + '. Check your connection and retry.';
+            } finally {
+                // Urgency mode ke disabled state ko wapas recover karein agar request finish ho jaye
+                if (document.getElementById('urgencyWarning') && !document.getElementById('urgencyWarning').classList.contains('hidden')) {
+                    if (hoursSelect) hoursSelect.disabled = true;
+                    if (restSelect)  restSelect.disabled  = true;
+                }
+            }
+
+            const elapsed = Date.now() - startTime;
+            const remaining = Math.max(0, MIN_LOADING_MS - elapsed);
+
+            if (redirectUrl) {
+                setTimeout(() => {
+                    hideGenerateOverlay();
+                    window.location.href = redirectUrl;
+                }, remaining);
+            } else {
+                setTimeout(() => {
+                    hideGenerateOverlay();
+                    showError(errorMsg || 'Something went wrong. Please try again.');
+                }, 1000);
+            }
+        });
+
+        // ── 4. TABS MANAGER SYSTEM ──
+function switchTab(type) {
+    document.getElementById('inputType').value = type;
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.getElementById('content-' + type).classList.add('active');
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        // Purani active classes ko remove karein
+        btn.classList.remove('bg-black', 'text-white', 'dark:bg-blue-600');
+btn.classList.add('text-slate-600', 'dark:text-slate-400');
+    });
+
+    const activeBtn = document.getElementById('tab-' + type);
+    activeBtn.classList.remove('text-slate-600', 'dark:text-slate-400');
+    // Nayi theme-based active classes add karein
+    activeBtn.classList.add('bg-black', 'text-white', 'dark:bg-blue-600');
+}
+
+        // ── 5. FILE DISPLAY HANDLER ──
+        function displayFileName() {
+    const input   = document.getElementById('fileInput');
+    const file    = input.files && input.files[0];
+    if (!file) return;
+
+    const isImage = file.type.startsWith('image/');
+    const sizeStr = file.size > 1024 * 1024
+        ? (file.size / (1024 * 1024)).toFixed(1) + ' MB'
+        : (file.size / 1024).toFixed(0) + ' KB';
+
+    // Sab states hide karo pehle
+    document.getElementById('uploadDefault').classList.add('hidden');
+    document.getElementById('imagePreviewState').classList.add('hidden');
+    document.getElementById('docFileState').classList.add('hidden');
+
+    if (isImage) {
+        // Image preview show karo
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('imagePreview').src = e.target.result;
+            document.getElementById('imageFileName').textContent = file.name;
+            document.getElementById('imageFileSize').textContent  = sizeStr;
+            document.getElementById('imagePreviewState').classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+
+    } else {
+        // PDF / DOCX state
+        const isPdf  = file.name.toLowerCase().endsWith('.pdf');
+        const docIcon = document.getElementById('docIcon');
+
+        // PDF = red, DOCX = blue
+        if (isPdf) {
+            docIcon.className = 'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-red-100 dark:bg-red-500/10';
+            docIcon.querySelector('svg').className = 'w-6 h-6 text-red-500';
+        } else {
+            docIcon.className = 'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-blue-100 dark:bg-blue-500/10';
+            docIcon.querySelector('svg').className = 'w-6 h-6 text-blue-500';
+        }
+
+        document.getElementById('docFileName').textContent = file.name;
+        document.getElementById('docFileSize').textContent = sizeStr;
+        document.getElementById('docFileState').classList.remove('hidden');
+    }
+}
+
+// ── DRAG & DROP HANDLER ──
+const uploadZone = document.getElementById('uploadZone');
+uploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadZone.classList.add('border-indigo-500');
+});
+uploadZone.addEventListener('dragleave', () => {
+    uploadZone.classList.remove('border-indigo-500');
+});
+uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove('border-indigo-500');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        document.getElementById('fileInput').files = files;
+        displayFileName();
+    }
+});
+
+        // ── 6. PREMIUM FLUID THEME ENGINE ──
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+            html.classList.toggle('dark', !isDark);
+            localStorage.theme = isDark ? 'light' : 'dark';
+        }
+
+        function checkUrgency(dateVal) {
+    if (!dateVal) return;
+
+    const today    = new Date();
+    today.setHours(0, 0, 0, 0);
+    const examDate = new Date(dateVal);
+    const daysLeft = Math.ceil((examDate - today) / (1000 * 60 * 60 * 24));
+
+    const target       = document.querySelector('[name="target_score"]');
+    const hoursSelect  = document.querySelector('[name="daily_hours"]');
+    const restSelect   = document.querySelector('[name="rest_days"]');
+    const warningBox   = document.getElementById('urgencyWarning');
+
+    // Warning box — already nahi hai toh create karo
+    if (!warningBox) {
+        const box = document.createElement('div');
+        box.id = 'urgencyWarning';
+        box.className = 'hidden mt-4 px-4 py-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl';
+        box.innerHTML = `
+            <div class="flex items-start gap-2.5">
+                <svg class="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <div>
+                    <p class="text-xs font-black text-red-700 dark:text-red-400 mb-0.5">
+                        ⚠️ Exams are in a week — Emergency mode activated.
+                    </p>
+                    <p class="text-xs text-red-600 dark:text-red-400 normal-case leading-relaxed" id="urgencyText"></p>
+                </div>
+            </div>`;
+        // Form ke submit button se pehle insert karo
+        const submitBtn = document.getElementById('generateBtn');
+        submitBtn.parentNode.insertBefore(box, submitBtn);
+    }
+
+    const warn    = document.getElementById('urgencyWarning');
+    const warnTxt = document.getElementById('urgencyText');
+    const isUrgent = daysLeft > 0 && daysLeft <= 7;
+    const isHighTarget = target && ['good', 'excellent'].includes(target.value);
+
+    if (isUrgent && isHighTarget) {
+        // Force values
+        if (hoursSelect) {
+            hoursSelect.value = '4';
+            hoursSelect.disabled = true;
+        }
+        if (restSelect) {
+            restSelect.value = '0';
+            restSelect.disabled = true;
+        }
+
+        warnTxt.textContent = `Only ${daysLeft} days left! To score 70%+, minimum 4 hours daily is required with no breaks. These fields have been auto-set for you.`;
+        warn.classList.remove('hidden');
+
+    } else {
+        // Release lock
+        if (hoursSelect) hoursSelect.disabled = false;
+        if (restSelect)  restSelect.disabled  = false;
+        if (warn) warn.classList.add('hidden');
+    }
+}
+
+// Target change pe bhi check karo
+document.querySelector('[name="target_score"]').addEventListener('change', function() {
+    const dateInput = document.querySelector('[name="exam_date"]');
+    if (dateInput.value) checkUrgency(dateInput.value);
+});
+
+        function showLoginModal(url) {
+    if (url) document.getElementById('loginModalBtn').href = url;
+    document.getElementById('loginModal').classList.remove('hidden');
+}
+
+function closeLoginModal() {
+    document.getElementById('loginModal').classList.add('hidden');
+}
+        document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('select').forEach(select => {
+        select.style.display = 'none';
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'relative w-full z-20';
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        // Button ke liye Light/Dark Background, Text, aur Border Colors
+        btn.className = select.className + ' flex justify-between items-center text-left w-full cursor-pointer bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-800';
+
+        const selectedOption = select.options[select.selectedIndex];
+        btn.innerHTML = `<span class="truncate">${selectedOption ? selectedOption.text : ''}</span>
+            <svg class="w-4 h-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 arrow-icon flex-shrink-0 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+            </svg>`;
+
+        // 1. POPUP CONTAINER (Light & Dark Background + Border + Shadow)
+        const list = document.createElement('div');
+        list.className = 'hidden absolute bottom-full mb-2 left-0 right-0 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl dark:shadow-slate-950/80 z-[99999] max-h-48 overflow-y-auto p-1.5 space-y-1';
+
+        // Styling Variable Classes Setup
+        const baseClass = 'px-3 py-2 text-sm rounded-lg cursor-pointer transition-colors duration-150 ';
+
+        // 2. ACTIVE / SELECTED ITEM (Light & Dark Highlight Theme)
+        const activeClass = 'bg-black text-white dark:bg-blue-600 dark:text-white font-semibold';
+
+        // 3. INACTIVE / NORMAL ITEM (Normal State & Hover States for Light/Dark)
+        const inactiveClass = 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white';
+
+        Array.from(select.options).forEach(opt => {
+            const item = document.createElement('div');
+            item.className = baseClass + (opt.selected ? activeClass : inactiveClass);
+            item.textContent = opt.text;
+
+            item.addEventListener('click', () => {
+                select.value = opt.value;
+                select.dispatchEvent(new Event('change'));
+                btn.querySelector('span').textContent = opt.text;
+
+                list.querySelectorAll('div').forEach(el => {
+                    el.className = baseClass + inactiveClass;
+                });
+                item.className = baseClass + activeClass;
+
+                list.classList.add('hidden');
+                btn.querySelector('.arrow-icon').classList.remove('rotate-180');
+                wrapper.style.zIndex = '20';
+            });
+
+            list.appendChild(item);
+        });
+
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+
+            document.querySelectorAll('.select-custom-list').forEach(l => {
+                if (l !== list) {
+                    l.classList.add('hidden');
+                    l.previousElementSibling.querySelector('.arrow-icon')?.classList.remove('rotate-180');
+                    l.parentElement.style.zIndex = '20';
+                }
+            });
+
+            const isHidden = list.classList.contains('hidden');
+            if (isHidden) {
+                list.classList.remove('hidden');
+                btn.querySelector('.arrow-icon').classList.add('rotate-180');
+                wrapper.style.zIndex = '999';
+            } else {
+                list.classList.add('hidden');
+                btn.querySelector('.arrow-icon').classList.remove('rotate-180');
+                wrapper.style.zIndex = '20';
+            }
+        });
+
+        list.classList.add('select-custom-list');
+        select.parentNode.insertBefore(wrapper, select);
+        wrapper.appendChild(select);
+        wrapper.appendChild(btn);
+        wrapper.appendChild(list);
+    });
+
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.select-custom-list').forEach(l => {
+            l.classList.add('hidden');
+            l.previousElementSibling.querySelector('.arrow-icon')?.classList.remove('rotate-180');
+            l.parentElement.style.zIndex = '20';
+        });
+    });
+});
+
+    </script>
+    <!-- Force Login Modal -->
+<div id="loginModal" class="hidden fixed inset-0 z-[99999] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeLoginModal()"></div>
+    <div class="relative shine-card bg-white dark:bg-slate-900 rounded-2xl p-8 max-w-sm w-full text-center z-10">
+        <div class="w-14 h-14 bg-red-50 dark:bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-7 h-7 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+        </div>
+        <h3 class="font-display text-lg font-bold text-slate-900 dark:text-white mb-2">Free Limit Reached</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-6 normal-case leading-relaxed">
+            You've used your 3 free generations. Sign in with Google to continue — completely free, just 1 click.
+        </p>
+        <a id="loginModalBtn" href="/accounts/google/login/"
+           class="w-full inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg bg-black text-white dark:bg-blue-600 font-bold text-sm mb-3">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            Sign In With Google
+        </a>
+        <button onclick="closeLoginModal()" class="text-xs text-slate-400">
+            Cancel
+        </button>
+    </div>
+</div>
+
+    <!-- ═══ GLOBAL ERROR MODAL ═══ -->
+<div id="errorModal" class="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeErrorModal()"></div>
+    <div class="error-modal-box relative bg-white dark:bg-[#1a2035] border border-gray-200 dark:border-slate-700/60 rounded-2xl p-7 max-w-sm w-full shadow-2xl">
+        <div id="errorIconWrap" class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5">
+            <svg id="errorIcon" class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+            </svg>
+        </div>
+        <h3 id="errorModalTitle" class="font-display font-black text-xl text-gray-900 dark:text-white text-center mb-2">Something Went Wrong</h3>
+        <p id="errorModalMsg" class="text-gray-500 dark:text-slate-400 text-sm text-center leading-relaxed mb-6">Please try again.</p>
+        <button id="errorModalBtn" onclick="closeErrorModal()" class="w-full h-11 font-bold text-sm rounded-xl transition-colors mb-3 text-white">Try Again</button>
+        <button onclick="closeErrorModal()" class="w-full text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 text-sm font-medium transition-colors text-center">Cancel</button>
+    </div>
+</div>
+
+</body>
+</html>

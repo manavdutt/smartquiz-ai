@@ -1,0 +1,459 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{% static 'favicon.png' %}">
+    <title>Question List — StudySuite AI</title>
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                        display: ['Syne', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Syne:wght@700;800&family=Poppins:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        html, body { overflow-x: hidden; }
+body { background-color: #f8fafc; font-family: 'Poppins', sans-serif; }
+        .dark body { background-color: #090d16; }
+
+        .grid-pattern {
+            background-image:
+                linear-gradient(rgba(99, 102, 241, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.02) 1px, transparent 1px);
+            background-size: 48px 48px;
+        }
+        .dark .grid-pattern {
+            background-image:
+                linear-gradient(rgba(99, 102, 241, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.04) 1px, transparent 1px);
+        }
+
+        .dark .shine-card {
+            border-top: 2px solid rgba(255,255,255,0.65) !important;
+            border-bottom: 2px solid rgba(255,255,255,0.65) !important;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.7), inset 0 1px 0px rgba(255,255,255,0.1);
+        }
+        .shine-card {
+            border-top: 2px solid rgba(0,0,0,0.75) !important;
+            border-bottom: 2px solid rgba(0,0,0,0.75) !important;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.15);
+        }
+        .dark .shine-header { border-bottom: 2px solid rgba(255,255,255,0.65) !important; }
+        .shine-header { border-bottom: 2px solid rgba(0,0,0,0.75) !important; }
+        .dark .shine-footer { border-top: 2px solid rgba(255,255,255,0.65) !important; }
+        .shine-footer { border-top: 2px solid rgba(0,0,0,0.75) !important; }
+
+        .q-card {
+            animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── BLANK UNDERLINE ── */
+        .blank-slot {
+            display: inline-block;
+            border-bottom: 2.5px solid #6366f1;
+            min-width: 90px;
+            margin: 0 4px;
+            vertical-align: bottom;
+        }
+        .dark .blank-slot { border-color: #818cf8; }
+
+        /* ── TYPE BADGE COLORS ── */
+        .badge-fitb  { background: #eef2ff; color: #4338ca; border-color: #c7d2fe; }
+        .badge-tf    { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+        .badge-vsq   { background: #ecfeff; color: #0e7490; border-color: #a5f3fc; }
+        .badge-sq    { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+        .badge-lq    { background: #fdf2f8; color: #be185d; border-color: #fbcfe8; }
+        .dark .badge-fitb  { background: rgba(79,70,229,0.1); color: #a5b4fc; border-color: rgba(99,102,241,0.3); }
+        .dark .badge-tf    { background: rgba(22,163,74,0.1); color: #4ade80; border-color: rgba(34,197,94,0.3); }
+        .dark .badge-vsq   { background: rgba(6,182,212,0.1); color: #67e8f9; border-color: rgba(6,182,212,0.3); }
+        .dark .badge-sq    { background: rgba(245,158,11,0.1); color: #fbbf24; border-color: rgba(245,158,11,0.3); }
+        .dark .badge-lq    { background: rgba(236,72,153,0.1); color: #f472b6; border-color: rgba(236,72,153,0.3); }
+
+        /* ── NUMBER BADGE COLORS BY TYPE ── */
+        .num-fitb  { background: #eef2ff; color: #4338ca; border-color: #c7d2fe; }
+        .num-tf    { background: #f3e8ff; color: #7e22ce; border-color: #ddd6fe; }
+        .num-vsq   { background: #ecfeff; color: #0e7490; border-color: #a5f3fc; }
+        .num-sq    { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+        .num-lq    { background: #fdf2f8; color: #be185d; border-color: #fbcfe8; }
+        .dark .num-fitb  { background: rgba(79,70,229,0.1); color: #a5b4fc; border-color: rgba(99,102,241,0.25); }
+        .dark .num-tf    { background: rgba(139,92,246,0.1); color: #c4b5fd; border-color: rgba(139,92,246,0.25); }
+        .dark .num-vsq   { background: rgba(6,182,212,0.1); color: #67e8f9; border-color: rgba(6,182,212,0.25); }
+        .dark .num-sq    { background: rgba(245,158,11,0.1); color: #fbbf24; border-color: rgba(245,158,11,0.25); }
+        .dark .num-lq    { background: rgba(236,72,153,0.1); color: #f472b6; border-color: rgba(236,72,153,0.25); }
+
+        /* ── STAGGERED ANIMATION ── */
+        {% for q in questions %}.q-card:nth-child({{ forloop.counter }}) { animation-delay: {{ forloop.counter0 }}00ms; }{% endfor %}
+    </style>
+</head>
+<body class="font-sans text-neutral-600 dark:text-slate-400 antialiased min-h-screen flex flex-col justify-between grid-pattern selection:bg-indigo-100 dark:selection:bg-indigo-500/30 transition-colors duration-300 capitalize">
+
+    <header class="sticky top-0 z-50 shine-header bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200/60 dark:border-slate-800/40">
+    <div class="w-full px-3 md:px-10 h-16 flex justify-between items-center">
+
+        <div class="flex items-center gap-2 md:gap-3 flex-shrink-0">
+            <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4L2 9l10 5 10-5-10-5z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 11v4c0 2.5 3 4 6 4s6-1.5 6-4v-4"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 9v7"/>
+                </svg>
+            </div>
+            <span class="font-display text-base md:text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                StudySuite<span class="text-indigo-600 dark:text-indigo-400">AI</span>
+            </span>
+        </div>
+
+        <div class="flex items-center gap-2 md:gap-3">
+
+            <a href="/" class="h-9 px-3 md:px-4 bg-black text-white dark:bg-blue-600 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-xs md:text-sm font-bold shadow-sm"
+               title="Home">
+                <span>Home</span>
+                <svg class="w-4 h-4 hidden sm:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h3m-6 0a1 1 0 001-1v-4a1 1 0 00-1-1h-2a1 1 0 00-1 1v4a1 1 0 001 1m6 0h-6"/>
+                    </svg>
+            </a>
+
+            <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden md:block"></div>
+
+            <button onclick="copyAll()"
+                    class="flex items-center justify-center gap-1.5 text-xs md:text-sm font-bold h-9 px-3 md:px-4 bg-black dark:bg-blue-600 text-white rounded-lg transition-all shadow-sm"
+                    title="Copy All">
+                <svg class="w-3.5 h-3.5 hidden md:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+                <span>Copy All</span>
+            </button>
+
+            <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden md:block"></div>
+
+            <button onclick="toggleTheme()" type="button"
+                    class="relative inline-flex h-9 w-16 items-center justify-between rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-1 cursor-pointer transition-all duration-300 active:scale-95 shadow-inner group focus:outline-none flex-shrink-0"
+                    aria-label="Toggle Theme">
+                <span class="absolute top-[3px] left-[3px] h-[28px] w-[28px] rounded-full bg-white dark:bg-blue-600 shadow-md transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform translate-x-0 dark:translate-x-7"></span>
+                <span class="z-10 flex items-center justify-center w-7 h-7 text-amber-500 dark:text-slate-500 transition-colors duration-300">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.243 17.657l.707.707M6.343 4.343l.707.707M12 7a5 5 0 100 10 5 5 0 000-10z"/>
+                    </svg>
+                </span>
+                <span class="z-10 flex items-center justify-center w-7 h-7 text-slate-400 dark:text-blue-100 transition-colors duration-300">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                    </svg>
+                </span>
+            </button>
+
+        </div>
+    </div>
+</header>
+
+    <main class="max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex-grow">
+
+        <div class="shine-card bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-transparent rounded-2xl p-4 sm:p-6 backdrop-blur-xl mb-6 sm:mb-8">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5">
+                <div class="flex-1">
+                    <div class="flex flex-wrap items-center gap-2 mb-3">
+                        <span class="badge-{{ qset.question_type }} text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border">
+                            {% if qset.question_type == 'fitb' %}✏️ Fill in the Blanks
+                            {% elif qset.question_type == 'tf' %}✅ True / False
+                            {% elif qset.question_type == 'vsq' %}⚡ Very Short Questions
+                            {% elif qset.question_type == 'sq' %}📝 Short Questions
+                            {% elif qset.question_type == 'lq' %}📖 Long Questions
+                            {% endif %}
+                        </span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 capitalize">
+                            {{ qset.difficulty }}
+                        </span>
+                        {% if qset.language != 'auto' %}
+                        <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 capitalize">
+                            {{ qset.language }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <h1 class="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight capitalize">
+                        {{ qset.title }}
+                    </h1>
+                    <p class="text-xs text-slate-400 dark:text-slate-500 mt-1.5 font-medium">
+                        Generated {{ qset.created_at|timesince }} ago &nbsp;·&nbsp; {{ questions|length }} question{{ questions|length|pluralize }}
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-4 px-5 py-3.5 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-100 dark:border-slate-800/80 flex-shrink-0">
+                    <div class="text-center">
+                        <p class="text-2xl font-black font-display text-slate-900 dark:text-white">{{ questions|length }}</p>
+                        <p class="text-[9px] font-bold uppercase tracking-widest text-slate-400 mt-0.5">Questions</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-4" id="questionsList">
+            {% for question in questions %}
+
+            {# ── FILL IN THE BLANKS ── #}
+            {% if qset.question_type == 'fitb' %}
+            <div class="q-card shine-card bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-transparent p-5">
+                <div class="flex gap-3 items-start">
+                    <span class="flex-shrink-0 w-8 h-8 num-fitb rounded-xl text-xs font-bold flex items-center justify-center border">{{ forloop.counter }}</span>
+                    <p class="text-sm font-medium text-slate-800 dark:text-slate-200 leading-relaxed normal-case pt-1">
+                        {{ question.question_text }}
+                        <span class="ml-2 text-slate-700 dark:text-slate-300 font-semibold">{ {{ question.wrong_option }} | {{ question.answer }} }</span>
+                    </p>
+                </div>
+            </div>
+
+            {# ── TRUE / FALSE ── #}
+            {% elif qset.question_type == 'tf' %}
+            <div class="q-card shine-card bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-transparent p-5">
+                <div class="flex gap-3 items-start">
+                    <span class="flex-shrink-0 w-8 h-8 num-tf rounded-xl text-xs font-bold flex items-center justify-center border">{{ forloop.counter }}</span>
+                    <p class="text-sm font-medium text-slate-800 dark:text-slate-200 leading-relaxed normal-case pt-1">
+                        {{ question.question_text }}
+                        <span class="ml-2 text-slate-700 dark:text-slate-300 font-semibold">{ True | False }</span>
+                    </p>
+                </div>
+            </div>
+
+            {# ── VSQ / SQ / LQ ── #}
+            {% else %}
+            <div class="q-card shine-card bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-transparent overflow-hidden">
+                <div class="p-5">
+                    <div class="flex gap-3 items-start">
+                        <span class="flex-shrink-0 w-8 h-8 num-{{ qset.question_type }} rounded-xl text-xs font-bold flex items-center justify-center border">{{ forloop.counter }}</span>
+                        <p class="text-sm font-medium text-slate-800 dark:text-slate-200 leading-relaxed normal-case pt-1">{{ question.question_text }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% empty %}
+            <div class="text-center py-20 text-slate-400 dark:text-slate-600">
+                <svg class="w-12 h-12 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                                              d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/></svg>
+                <p class="text-sm font-medium">No questions found.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if questions %}
+<div class="mt-8 flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-100 dark:border-slate-800/60">
+
+    <div class="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+
+        <a href="/question-generator/"
+           class="flex items-center justify-center gap-1.5 text-xs md:text-sm font-bold h-9 px-3 md:px-4 bg-black dark:bg-blue-600 text-white rounded-lg transition-all w-full md:w-auto">
+            <span class="hidden md:inline">+</span>
+            <span>New Set</span>
+        </a>
+
+        <button onclick="downloadStructuredPDF()" id="pdfBtn"
+                class="flex items-center justify-center gap-1.5 text-xs md:text-sm font-bold h-9 px-3 md:px-4 bg-black dark:bg-blue-600 text-white rounded-lg transition-all w-full md:w-auto">
+            <svg class="w-3.5 h-3.5 hidden md:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            <span>Download PDF</span>
+        </button>
+
+    </div>
+</div>
+{% endif %}
+
+    </main>
+
+    <div style="position: fixed; top: 0; left: 0; width: 0; height: 0; overflow: hidden; opacity: 0; pointer-events: none; z-index: -9999;">
+        <div id="premium-assessment-document" style="
+            font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif;
+            text-rendering: geometricPrecision;
+            background-color: #f9fafb;
+            padding: 35px;
+            color: #1f2937;
+            width: 720px; /* Locked A4 Width */
+            margin: 0 auto;
+            box-sizing: border-box;
+        ">
+            <div style="border-bottom: 2px solid #e5e7eb; padding-bottom: 20px; margin-bottom: 25px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h1 style="color: #4f46e5; font-size: 20px; margin: 0; font-weight: 800;">STUDYSUITE AI</h1>
+                    </div>
+                    <div style="text-align: right; font-size: 11px; color: #6b7280; font-weight: 600; line-height: 1.4;">
+                        <p style="margin: 0;">Generated: {% now "d M Y, H:i" %}</p>
+                        <p style="margin: 0;">Total Questions: {{ questions|length }}</p>
+                    </div>
+                </div>
+
+                <h2 style="font-size: 24px; font-weight: 800; color: #111827; margin: 16px 0 12px 0; line-height: 1.3; text-transform: capitalize;">{{ qset.title }}</h2>
+
+                <div style="display: flex; gap: 8px;">
+                    <span style="font-size: 9px; font-weight: 700; background: #e0e7ff; padding: 5px 9px; border-radius: 6px; color: #4338ca; text-transform: uppercase;">{{ qset.get_question_type_display }}</span>
+                    <span style="font-size: 9px; font-weight: 700; background: #f3f4f6; padding: 5px 9px; border-radius: 6px; color: #4b5563; text-transform: uppercase;">{{ qset.difficulty|upper }} LEVEL</span>
+                </div>
+            </div>
+
+            <!-- Questions Cards Container -->
+            <div style="display: block;"> <!-- 🔥 FIX 1: Removed Flexbox from parent -->
+                {% for question in questions %}
+                <!-- 🔥 FIX 2: Added margin-bottom here instead of gap -->
+                <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; background: #ffffff; page-break-inside: avoid; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); margin-bottom: 18px;">
+                    <div style="display: flex; gap: 14px; align-items: flex-start;">
+                        <div style="background: #111827; color: #ffffff; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: 700; border-radius: 7px; font-size: 13px; flex-shrink: 0; line-height: 1;">
+                            {{ forloop.counter }}
+                        </div>
+                        <p style="font-weight: 600; font-size: 15px; margin: 0; padding-top: 2px; color: #111827; line-height: 1.5;">
+                            {{ question.question_text }}
+
+                            <!-- Inline Answers handling for TF and FITB -->
+                            {% if qset.question_type == 'fitb' %}
+                            <span style="margin-left: 8px; color: #6b7280; font-weight: 700;">{ {{ question.wrong_option }} | {{ question.answer }} }</span>
+                            {% elif qset.question_type == 'tf' %}
+                            <span style="margin-left: 8px; color: #6b7280; font-weight: 700;">{ True | False }</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div style="margin-top: 40px; text-align: center; font-size: 10px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 20px; font-weight: 500;">
+                Generated by StudySuite AI • studysuiteai.com
+            </div>
+        </div>
+    </div>
+
+    <footer class="shine-footer border-t border-slate-200/60 dark:border-slate-800/40 bg-white/60 dark:bg-slate-950/40 backdrop-blur-sm relative z-10">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 md:pt-16 pb-6 sm:pb-8">
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-5 sm:gap-8 pb-10 sm:pb-12 border-b border-slate-900/10 dark:border-white/10">
+
+                <div class="col-span-2 md:col-span-2">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center">
+                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4L2 9l10 5 10-5-10-5z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 11v4c0 2.5 3 4 6 4s6-1.5 6-4v-4"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20 9v7"/>
+                            </svg>
+                        </div>
+                        <span class="font-display font-bold text-base text-slate-900 dark:text-white tracking-tight">
+                            StudySuite<span class="text-indigo-600 dark:text-indigo-400">AI</span>
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm">
+                        Making exam preparation simple, fast, and 100% free. Create custom quizzes, practice sheets, and structured smart timetables in under 30 seconds.
+                    </p>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-4">AI Study Tools</h5>
+                    <ul class="space-y-2.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <li><a href="/quiz-generator/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Quiz Generator</a></li>
+                        <li><a href="{% url 'question_generator' %}" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Question Generator</a></li>
+                        <li><a href="/study-planner/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Study Planner</a></li>
+                        <li><a href="/plans/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">History</a></li>
+
+                    </ul>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-4">Platform</h5>
+                    <ul class="space-y-2.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <li><a href="#features" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Our Features</a></li>
+                        <li><a href="#about" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">About Us</a></li>
+                        <li><a href="#terms" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Terms & Rules</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 text-xs font-medium text-slate-400">
+                <div class="flex items-center gap-2">
+                    <p>&copy; 2026 StudySuite AI • All rights reserved.</p>
+                </div>
+            </div>
+
+        </div>
+    </footer>
+
+    <script>
+        // ── THEME ──
+        function toggleTheme() {
+    const html = document.documentElement;
+    const isDark = html.classList.contains('dark');
+    html.classList.toggle('dark', !isDark);
+    localStorage.theme = isDark ? 'light' : 'dark';
+}
+
+        // ── COPY ALL (Questions only) ──
+        function copyAll() {
+            const title = `{{ qset.title }} — {{ qset.get_question_type_display }}\nGenerated by StudySuite AI\n\n`;
+            let text = title;
+            {% for question in questions %}
+            text += `{{ forloop.counter }}. {{ question.question_text|escapejs }}\n\n`;
+            {% endfor %}
+
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('[onclick="copyAll()"]');
+                const orig = btn.innerHTML;
+                btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Copied!`;
+                setTimeout(() => btn.innerHTML = orig, 2000);
+            });
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // 📥 STRUCTURED EXCLUSIVE QUESTION SHEET PDF DOWNLOAD
+        // ─────────────────────────────────────────────────────────────
+        function downloadStructuredPDF() {
+            const btn = document.getElementById('pdfBtn');
+            const originalBtnContent = btn.innerHTML;
+            btn.innerHTML = `<svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Generating...`;
+            btn.disabled = true;
+
+            const reportElement = document.getElementById('premium-assessment-document');
+
+            const pdfOptions = {
+                margin:       [12, 12, 12, 12],
+                filename:     '{{ qset.title|escapejs }}_StudySuite.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  {
+                    scale: 2,
+                    useCORS: true,
+                    letterRendering: false, /* 🌟 FIXED: False prevents Hindi fonts from splitting up */
+                    scrollX: 0,
+                    scrollY: 0
+                },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: ['css', 'legacy'] }
+            };
+
+            // Force wait for fonts to load before clicking photo
+            document.fonts.ready.then(() => {
+                html2pdf().set(pdfOptions).from(reportElement).save().then(() => {
+                    btn.innerHTML = originalBtnContent;
+                    btn.disabled = false;
+                });
+            });
+        }
+    </script>
+</body>
+</html>

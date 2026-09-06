@@ -1,0 +1,913 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{% static 'favicon.png' %}">
+    <title>StudySuite AI — Free AI Quiz Generator & Study Planner</title>
+<meta name="description" content="Free AI platform to generate MCQ quizzes, question papers, and study plans from any PDF, text, or YouTube video. Results in under 60 seconds.">
+
+    <meta property="og:type" content="website">
+<meta property="og:site_name" content="StudySuite AI">
+<meta property="og:title" content="StudySuite AI — Free AI Quiz Generator & Study Planner">
+<meta property="og:description" content="Turn any PDF, notes, or YouTube video into quizzes and study plans instantly. 100% free.">
+<meta property="og:url" content="https://studysuiteai.com/">
+    <meta property="og:image" content="{% static 'og-image.png' %}">
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                        display: ['Syne', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        html { overflow-x: hidden; }
+        body { background-color: #f8fafc; overflow-x: hidden; }
+        .dark body { background-color: #090d16; }
+
+        /* ── PURE CSS INITIAL SKELETON LOADER (No Tailwind Dependency) ── */
+        #skeleton-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f8fafc;
+            z-index: 99999;
+            overflow-y: auto;
+            box-sizing: border-box;
+            padding: 0;
+            margin: 0;
+        }
+        html.dark #skeleton-loader {
+            background-color: #090d16;
+        }
+        .sk-header {
+            height: 64px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+            border-bottom: 3px solid rgba(0, 0, 0, 0.75);
+            background: #ffffff;
+        }
+        html.dark .sk-header {
+            border-bottom: 3px solid rgba(255, 255, 255, 0.65);
+            background: #090d16;
+        }
+        .sk-hero {
+            padding: 80px 24px 48px;
+            text-align: center;
+            max-width: 896px;
+            margin: 0 auto;
+        }
+        .sk-grid {
+            max-width: 1152px;
+            margin: 0 auto;
+            padding: 0 24px 48px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        .sk-card {
+            background: #ffffff;
+            border: 3px solid rgba(0, 0, 0, 0.75);
+            border-radius: 16px;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+        html.dark .sk-card {
+            background: rgba(15, 23, 42, 0.4);
+            border: 3px solid rgba(255, 255, 255, 0.65);
+        }
+        .sk-item {
+            background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+            background-size: 200% 100%;
+            animation: sk-shimmer 1.5s infinite linear;
+        }
+        html.dark .sk-item {
+            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+            background-size: 200% 100%;
+        }
+        @keyframes sk-shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        @media (max-width: 768px) {
+            .sk-hidden-mobile { display: none !important; }
+        }
+
+        /* ── SOFT PREMIUM BACKGROUND MESH ── */
+        .hero-mesh {
+            background:
+                radial-gradient(circle at 50% -20%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 90% 20%, rgba(6, 182, 212, 0.05) 0%, transparent 40%);
+        }
+        .dark .hero-mesh {
+            background:
+                radial-gradient(circle at 50% -20%, rgba(99, 102, 241, 0.18) 0%, transparent 50%),
+                radial-gradient(circle at 90% 20%, rgba(6, 182, 212, 0.08) 0%, transparent 40%);
+        }
+
+        /* ── METRIC GRID SYSTEM ── */
+        .grid-pattern {
+            background-image:
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 48px 48px;
+        }
+        .dark .grid-pattern {
+            background-image:
+                linear-gradient(rgba(99, 102, 241, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.04) 1px, transparent 1px);
+        }
+
+        /* ── SMOOTH SCROLL ENTRANCE ── */
+        .fade-in-scroll {
+            opacity: 0;
+            transform: translateY(16px);
+            transition: opacity 0.6s cubic-bezier(0.215, 0.610, 0.355, 1), transform 0.6s cubic-bezier(0.215, 0.610, 0.355, 1);
+        }
+        .fade-in-scroll.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ── INTERACTIVE CARDS & SHINING DARK BORDERS ── */
+        .tool-card {
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s;
+        }
+        .tool-card:hover {
+            transform: translateY(-4px);
+        }
+
+        /* CHANGED SHINING WHITE BORDERS TO 2PX FOR DARK MODE */
+        .dark .shine-card {
+            border-top: 3px solid rgba(255, 255, 255, 0.65) !important;
+            border-bottom: 3px solid rgba(255, 255, 255, 0.65) !important;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7),
+                        inset 0 1px 0px rgba(255, 255, 255, 0.1),
+                        0 -4px 12px -2px rgba(255, 255, 255, 0.04),
+                        0 4px 12px -2px rgba(255, 255, 255, 0.04);
+        }
+
+        .dark .shine-header {
+            border-bottom: 3px solid rgba(255, 255, 255, 0.65) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .dark .shine-section-b {
+            border-bottom: 3px solid rgba(255, 255, 255, 0.65) !important;
+        }
+
+        .dark .shine-section-y {
+            border-top: 3px solid rgba(255, 255, 255, 0.65) !important;
+            border-bottom: 3px solid rgba(255, 255, 255, 0.65) !important;
+        }
+
+        .progress-fill {
+            transition: width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* CHANGED SHINING BLACK BORDERS TO 2PX FOR LIGHT MODE */
+        .shine-card {
+            border-top: 3px solid rgba(0, 0, 0, 0.75) !important;
+            border-bottom: 3px solid rgba(0, 0, 0, 0.75) !important;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.35),
+                        inset 0 1px 0px rgba(0, 0, 0, 0.1),
+                        0 -4px 12px -2px rgba(0, 0, 0, 0.15),
+                        0 4px 12px -2px rgba(0, 0, 0, 0.15);
+        }
+
+        .shine-header {
+            border-top: 3px solid rgba(0, 0, 0, 0.75) !important;
+            border-bottom: 3px solid rgba(0, 0, 0, 0.75) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .shine-section-b {
+            border-top: 3px solid rgba(0, 0, 0, 0.75) !important;
+            border-bottom: 3px solid rgba(0, 0, 0, 0.75) !important;
+        }
+
+        .shine-section-y {
+            border-top: 3px solid rgba(0, 0, 0, 0.75) !important;
+            border-bottom: 3px solid rgba(0, 0, 0, 0.75) !important;
+        }
+
+        /* ── FOOTER SHINE (LIGHT MODE - BLACK 2PX) ── */
+        .shine-footer {
+            border-top: 3px solid rgba(0, 0, 0, 0.75) !important;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        /* ── FOOTER SHINE (DARK MODE - WHITE 2PX) ── */
+        .dark .shine-footer {
+            border-top: 3px solid rgba(255, 255, 255, 0.65) !important;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Profile Dropdown Animation */
+.dropdown-closed {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.96);
+    pointer-events: none;
+    visibility: hidden;
+    transition: opacity 0.2s cubic-bezier(0.16,1,0.3,1),
+                transform 0.2s cubic-bezier(0.16,1,0.3,1),
+                visibility 0.2s;
+    transform-origin: top right;
+}
+.dropdown-open {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+    visibility: visible;
+    transition: opacity 0.2s cubic-bezier(0.16,1,0.3,1),
+                transform 0.2s cubic-bezier(0.16,1,0.3,1),
+                visibility 0.2s;
+    transform-origin: top right;
+}
+
+    </style>
+</head>
+<body class="font-sans text-neutral-600 dark:text-slate-400 antialiased min-h-screen flex flex-col transition-colors duration-300 capitalize">
+
+    <div id="skeleton-loader">
+        <div class="sk-header">
+            <div class="sk-item" style="width: 140px; height: 24px; border-radius: 6px;"></div>
+            <div class="sk-hidden-mobile" style="display: flex; gap: 24px;">
+                <div class="sk-item" style="width: 60px; height: 16px; border-radius: 4px;"></div>
+                <div class="sk-item" style="width: 60px; height: 16px; border-radius: 4px;"></div>
+                <div class="sk-item" style="width: 60px; height: 16px; border-radius: 4px;"></div>
+            </div>
+            <div class="sk-item" style="width: 100px; height: 34px; border-radius: 8px;"></div>
+        </div>
+        <div class="sk-hero">
+            <div class="sk-item" style="width: 60%; height: 48px; max-width: 500px; margin: 0 auto 24px; border-radius: 8px;"></div>
+            <div class="sk-item" style="width: 85%; height: 18px; max-width: 600px; margin: 0 auto 12px; border-radius: 4px;"></div>
+            <div class="sk-item" style="width: 50%; height: 18px; max-width: 400px; margin: 0 auto 36px; border-radius: 4px;"></div>
+            <div style="display: flex; gap: 16px; justify-content: center;">
+                <div class="sk-item" style="width: 150px; height: 38px; border-radius: 8px;"></div>
+                <div class="sk-item" style="width: 120px; height: 38px; border-radius: 8px;"></div>
+            </div>
+        </div>
+        <div class="sk-grid">
+            <div class="sk-card">
+                <div class="sk-item" style="width: 40px; height: 40px; border-radius: 10px; margin-bottom: 20px;"></div>
+                <div class="sk-item" style="width: 70%; height: 22px; margin-bottom: 16px; border-radius: 4px;"></div>
+                <div class="sk-item" style="width: 100%; height: 14px; margin-bottom: 8px; border-radius: 4px;"></div>
+                <div class="sk-item" style="width: 90%; height: 14px; margin-bottom: 8px; border-radius: 4px;"></div>
+                <div class="sk-item" style="width: 40%; height: 14px; border-radius: 4px;"></div>
+            </div>
+            <div class="sk-card">
+                <div class="sk-item" style="width: 40px; height: 40px; border-radius: 10px; margin-bottom: 20px;"></div>
+                <div class="sk-item" style="width: 70%; height: 22px; margin-bottom: 16px; border-radius: 4px;"></div>
+                <div class="sk-item" style="width: 100%; height: 14px; margin-bottom: 8px; border-radius: 4px;"></div>
+                <div class="sk-item" style="width: 90%; height: 14px; margin-bottom: 8px; border-radius: 4px;"></div>
+                <div class="sk-item" style="width: 40%; height: 14px; border-radius: 4px;"></div>
+            </div>
+            <div class="sk-card">
+                <div class="sk-item" style="width: 40px; height: 40px; border-radius: 10px; margin-bottom: 20px;"></div>
+                <div class="sk-item" style="width: 70%; height: 22px; margin-bottom: 16px; border-radius: 4px;"></div>
+                <div class="sk-item" style="width: 100%; height: 14px; margin-bottom: 8px; border-radius: 4px;"></div>
+                <div class="sk-item" style="width: 90%; height: 14px; margin-bottom: 8px; border-radius: 4px;"></div>
+                <div class="sk-item" style="width: 40%; height: 14px; border-radius: 4px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-content" style="display: none;">
+        <header class="sticky top-0 z-50 shine-header border-b border-slate-200/60 dark:border-transparent bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
+            <div class="w-full px-6 md:px-10 h-16 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4L2 9l10 5 10-5-10-5z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 11v4c0 2.5 3 4 6 4s6-1.5 6-4v-4"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20 9v7"/>
+                        </svg>
+                    </div>
+                    <span class="font-display text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                        StudySuite<span class="text-indigo-600 dark:text-indigo-400">AI</span>
+                    </span>
+                </div>
+
+                <nav class="hidden md:flex items-center gap-8">
+                    <a href="#tools" class="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">Tools</a>
+                    <a href="#features" class="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">Features</a>
+                    <a href="#about" class="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">About</a>
+                    <a href="#terms" class="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">Terms & Conditions</a>
+                    <a href="/plans/" class="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">History</a>
+                </nav>
+
+                <div class="flex items-center gap-3 sm:gap-4">
+
+    <!-- LOGIN / USER AREA — toggle se pehle -->
+    {% if user.is_authenticated and not user.is_staff %}
+    <div class="relative" id="profileMenu">
+        <button onclick="toggleProfile()"
+                class="w-9 h-9 rounded-full overflow-hidden bg-indigo-600 dark:bg-blue-600 flex items-center justify-center text-white font-bold text-sm cursor-pointer hover:opacity-90 transition-opacity focus:outline-none">
+            {% with google=user.socialaccount_set.all|first %}
+                {% if google.extra_data.picture %}
+                    <img src="{{ google.extra_data.picture }}" class="w-full h-full object-cover" alt="profile">
+                {% else %}
+                    {{ user.email|first|upper }}
+                {% endif %}
+            {% endwith %}
+        </button>
+        <div id="profileDropdown"
+             class="dropdown-closed absolute right-0 top-12 w-44 sm:w-52 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl p-3 z-50 flex flex-col gap-2">
+
+    <!-- 1. Email -->
+    <p class="text-xs text-slate-400 truncate lowercase px-1 pb-1 border-b border-slate-100 dark:border-slate-800">
+        {{ user.email }}
+    </p>
+
+            <!-- 2. Attempts Block -->
+
+    <div class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg bg-black dark:bg-blue-600 shadow-sm">
+        <span class="text-xs font-bold text-white">⚡ Attempts</span>
+        <span id="attemptsCount" class="text-xs font-bold text-white">--/--</span>
+    </div>
+
+
+            <!-- 3. History Button -->
+    <a href="/plans/"
+       class="w-full inline-flex items-center justify-center gap-2 h-9 px-4 rounded-lg bg-black text-white dark:bg-blue-600 font-bold text-sm shadow-sm">
+        📋 History
+    </a>
+
+            <!-- 4. Logout Button -->
+    <form method="post" action="{% url 'custom_logout' %}" class="w-full">
+        {% csrf_token %}
+        <button type="submit"
+                class="w-full inline-flex items-center justify-center gap-2 h-9 px-4 rounded-lg bg-rose-600 text-white hover:bg-rose-700 font-bold text-sm transition-colors shadow-sm">
+            Log Out
+        </button>
+    </form>
+
+            <!-- 5. Reset Info -->
+
+    <p id="attemptsReset" class="text-xs text-center text-slate-400 dark:text-slate-500 pb-1">
+        Loading...
+    </p>
+
+
+</div>
+    </div>
+    {% else %}
+    <a href="/accounts/google/login/"
+       class="inline-flex items-center justify-center gap-2 font-bold rounded-lg bg-black text-white dark:bg-blue-600 shadow-sm h-9 w-9 sm:w-auto sm:px-4 sm:text-sm">
+        <!-- Google G icon — mobile pe sirf yahi dikhega -->
+        <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        <!-- Text — sirf sm+ pe dikhega -->
+        <span class="hidden sm:inline">Sign In With Google</span>
+    </a>
+    {% endif %}
+
+                    <!-- Theme Toggle -->
+    <button onclick="toggleTheme()"
+            class="relative inline-flex h-9 w-16 items-center justify-between rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-1 cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 shadow-inner group focus:outline-none"
+            aria-label="Toggle Theme">
+        <span class="absolute top-[3px] left-[3px] h-[28px] w-[28px] rounded-full bg-white dark:bg-blue-600 shadow-md transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform translate-x-0 dark:translate-x-7"></span>
+        <span class="z-10 flex items-center justify-center w-7 h-7 text-amber-500 dark:text-slate-500 transition-colors duration-300">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.243 17.657l.707.707M6.343 4.343l.707.707M12 7a5 5 0 100 10 5 5 0 000-10z"/>
+            </svg>
+        </span>
+        <span class="z-10 flex items-center justify-center w-7 h-7 text-slate-400 dark:text-blue-100 transition-colors duration-300">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+        </span>
+    </button>
+
+</div>
+            </div>
+        </header>
+
+        <section class="relative hero-mesh grid-pattern shine-section-b border-b border-slate-200/50 dark:border-transparent w-full">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 pt-14 pb-8 sm:pt-20 sm:pb-12 md:pt-28 md:pb-16 text-center relative z-10">
+
+                <h1 class="font-display text-3xl sm:text-5xl md:text-6xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-[1.1] mb-5 sm:mb-6">
+                    Your Complete<br>
+                    <span class="bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-500 bg-clip-text text-transparent dark:from-indigo-400 dark:to-cyan-400">AI Learning Suite</span>
+                </h1>
+
+                <p class="text-sm sm:text-base md:text-lg text-slate-500 dark:text-slate-400 w-full max-w-xl mx-auto leading-relaxed mb-7 sm:mb-10">
+                    Instantly transform any document, PDF, or YouTube video into tailored AI quizzes and precise questions, while effortlessly generating smart study schedules.
+                </p>
+
+                <div class="flex flex-col sm:flex-row justify-center items-center gap-3 max-w-sm mx-auto">
+        <a href="/quiz-generator/"
+           class="w-full sm:w-auto inline-flex items-center justify-center h-9 px-4 rounded-lg bg-black text-white dark:bg-blue-600 font-bold text-sm shadow-sm">
+    Generate MCQ Quiz
+</a>
+<a href="#tools"
+   class="w-full sm:w-auto inline-flex items-center justify-center h-9 px-4 rounded-lg bg-black text-white dark:bg-blue-600 font-bold text-sm shadow-sm">
+    Explore Tools
+</a>
+    </div>
+            </div>
+        </section>
+
+        <section id="tools" class="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-20 lg:py-24 w-full">
+        <div class="max-w-xl mx-auto text-center mb-10 md:mb-16 fade-in-scroll">
+            <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-3">
+                1 Platform , 3 Smart Tools
+            </h2>
+            <p class="text-sm sm:text-base text-slate-500 dark:text-slate-400 leading-relaxed">
+                Switch easily between interactive quizzes, custom questions, and smart study plans to boost your exam preparation.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <a href="/quiz-generator/"
+               class="tool-card shine-card flex flex-col justify-between bg-white dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800/80 hover:border-indigo-500/30 dark:hover:border-indigo-400/30 rounded-2xl p-6 shadow-sm hover:shadow-md fade-in-scroll">
+                <div>
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                        </div>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-semibold">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active
+                        </span>
+                    </div>
+                    <h3 class="font-display text-lg font-bold text-slate-900 dark:text-white mb-2">AI MCQ Generator</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
+                        Turn your notes, PDF files, or YouTube links into interactive multiple-choice quizzes instantly. It automatically creates smart options and gives you instant results to check your knowledge.
+                    </p>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800 text-xs font-semibold">
+                        <span class="text-slate-400 font-normal">Accepts PDF, TXT, URLs</span>
+                        <span class="text-indigo-600 dark:text-indigo-400 flex items-center gap-1">TRY NOW </span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{% url 'question_generator' %}"
+               class="tool-card shine-card flex flex-col justify-between bg-white dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800/80 hover:border-indigo-500/30 dark:hover:border-indigo-400/30 rounded-2xl p-6 shadow-sm hover:shadow-md fade-in-scroll">
+                <div>
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="w-10 h-10 rounded-xl bg-cyan-50 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-semibold">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active
+                        </span>
+                    </div>
+                    <h3 class="font-display text-lg font-bold text-slate-900 dark:text-white mb-2">AI Question Generator</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
+                        Go beyond simple MCQs. Instantly generate short answers, True/False sheets, fill-in-the-blanks, and detailed theory questions customized for any chapter or topic.
+                    </p>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800 text-xs font-semibold">
+                        <span class="text-slate-400 font-normal">All Type Questions , T/F , FITB</span>
+                        <span class="text-indigo-600 dark:text-indigo-400 flex items-center gap-1">TRY NOW </span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="/study-planner/" class="block md:col-span-2 lg:col-span-1">
+                <div class="tool-card shine-card flex flex-col justify-between h-full bg-white dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm fade-in-scroll hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:shadow-md transition-all duration-200 cursor-pointer">
+                    <div>
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="w-10 h-10 rounded-xl bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            </div>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-semibold">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active
+                        </span>
+                        </div>
+                        <h3 class="font-display text-lg font-bold text-slate-900 dark:text-white mb-2">AI Exam Study Planner</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
+                            Create a customized day-by-day study timetable based on your actual exam dates. Let AI break down your syllabus, set achievable daily goals, and get you ready without any last-minute stress.
+                        </p>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-400">
+                            <span>Set Daily Goals & Crack Exams</span>
+                            <span class="font-medium text-indigo-600 dark:text-indigo-400">TRY NOW </span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+
+        </div>
+    </section>
+
+        <section id="features" class="shine-section-y border-y border-slate-200/60 dark:border-transparent bg-white/40 dark:bg-slate-900/10 backdrop-blur-sm py-12 sm:py-16 md:py-20 lg:py-24 w-full">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6">
+            <div class="max-w-md mx-auto text-center mb-10 md:mb-16 fade-in-scroll">
+                <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-3">
+                    Features Built For You By Us
+                </h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400">
+                    Powerful AI tools packed inside a clean, simple, and distraction-free design.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="fade-in-scroll shine-card bg-white dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60 rounded-xl p-5">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-4">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    </div>
+                    <h4 class="font-bold text-slate-900 dark:text-white text-sm mb-1">Instant Generation</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                        No more waiting. Get your complete custom quizzes, question sheets, and study blueprints in less than 120 seconds.
+                    </p>
+                </div>
+
+                <div class="fade-in-scroll shine-card bg-white dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60 rounded-xl p-5">
+                    <div class="w-8 h-8 rounded-lg bg-cyan-50 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center mb-4">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                    </div>
+                    <h4 class="font-bold text-slate-900 dark:text-white text-sm mb-1">Any File Formats</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                        Easily upload standard PDFs, Word files, copy-pasted text, or even paste direct YouTube links with zero hassle.
+                    </p>
+                </div>
+
+                <div class="fade-in-scroll shine-card bg-white dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60 rounded-xl p-5">
+                    <div class="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center mb-4">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                          d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+                </div>
+                <h4 class="font-bold text-slate-900 dark:text-white text-sm mb-1">Many Languages</h4>
+                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Study in your own way. Our AI naturally creates and translates study materials across all major global languages.
+                </p>
+            </div>
+
+            <div class="fade-in-scroll shine-card bg-white dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60 rounded-xl p-5">
+                <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-4">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                </div>
+                <h4 class="font-bold text-slate-900 dark:text-white text-sm mb-1">Create Without Limits</h4>
+                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    No limits, no hidden blockades. Create as many custom mock exams, quizzes, and practice tools as you need to clear your concepts.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+    <section class="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-20 lg:py-24 w-full">
+    <div class="fade-in-scroll shine-card bg-white dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-5 sm:p-8 md:p-14 text-center relative overflow-hidden group transition-all duration-300">
+
+        <div class="absolute inset-0 bg-gradient-to-tr from-indigo-500/5 via-transparent to-cyan-500/5 dark:from-indigo-500/10 dark:to-blue-500/5 pointer-events-none"></div>
+        <div class="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 max-w-xl mx-auto flex flex-col items-center">
+            <h2 class="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-4 tracking-tight leading-tight">
+                Start Building Smarter <br class="hidden sm:block">
+                <span class="bg-gradient-to-r from-indigo-600 to-cyan-500 bg-clip-text text-transparent dark:from-indigo-400 dark:to-cyan-400">Assessments Instantly</span>
+            </h2>
+
+            <p class="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed mb-8">
+                No complex configurations, no credit card required. Drop your files, paste text, or input video links to experience frictionless AI generation in seconds.
+            </p>
+
+            <a href="/quiz-generator/"
+               class="inline-flex items-center justify-center h-9 px-4 rounded-lg font-bold text-sm shadow-sm bg-black text-white dark:bg-blue-600">
+    <span>Launch AI Quiz Generator</span>
+    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+    </svg>
+</a>
+        </div>
+    </div>
+</section>
+
+    <section id="about" class="shine-section-y border-y border-slate-200/60 dark:border-transparent bg-white/40 dark:bg-slate-900/10 backdrop-blur-sm py-12 sm:py-16 md:py-20 lg:py-24 w-full">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        <div class="max-w-xl mx-auto text-center mb-10 md:mb-16 fade-in-scroll">
+            <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-3">
+                About StudySuite <span class="text-indigo-600 dark:text-indigo-400">AI</span>
+            </h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400">
+                A smart and simple platform built to help students and teachers learn faster .
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="fade-in-scroll shine-card bg-white dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60 rounded-xl p-5">
+                <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-4">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                      d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.243 17.657l.707.707M6.343 4.343l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+                </div>
+                <h4 class="font-bold text-slate-900 dark:text-white text-sm mb-1">Our Goal</h4>
+                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    StudySuite AI uses smart technology to save your time. We turn long notes and boring documents into helpful study materials instantly.
+                </p>
+            </div>
+
+            <div class="fade-in-scroll shine-card bg-white dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60 rounded-xl p-5">
+                <div class="w-8 h-8 rounded-lg bg-cyan-50 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center mb-4">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                </div>
+                <h4 class="font-bold text-slate-900 dark:text-white text-sm mb-1">100% Free Access</h4>
+                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    We believe everyone deserves quality education. That is why all our advanced AI study toolkits are completely free for students worldwide.
+                </p>
+            </div>
+
+            <div class="fade-in-scroll shine-card bg-white dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60 rounded-xl p-5">
+                <div class="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center mb-4">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                </div>
+                <h4 class="font-bold text-slate-900 dark:text-white text-sm mb-1">Super Fast Speed</h4>
+                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    No more waiting for hours. Our optimized system generates complete interactive quizzes and custom plans in less than 120 seconds.
+                </p>
+            </div>
+
+            <div class="fade-in-scroll shine-card bg-white dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60 rounded-xl p-5">
+                <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-4">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                      d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/></svg>
+                </div>
+                <h4 class="font-bold text-slate-900 dark:text-white text-sm mb-1">Your 24/7 Study Hub</h4>
+                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Whether it's a YouTube video, a complex PDF document, or text notes, we act as your personal assistant to make exam prep simple.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+    <section id="terms" class="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-20 lg:py-24 w-full">
+    <div class="max-w-xl mx-auto text-center mb-10 md:mb-16 fade-in-scroll">
+        <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-3">
+            Terms & Conditions
+        </h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+            Please read these simple rules before using our StudySuite AI platform.
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="fade-in-scroll shine-card bg-white dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60 rounded-xl p-5">
+            <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-4">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h4 class="font-bold text-slate-900 dark:text-white text-sm mb-1">1. Acceptance of Terms</h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                By using StudySuite AI to create quizzes, questions, or planners, you automatically agree to follow our basic rules and terms.
+            </p>
+        </div>
+
+        <div class="fade-in-scroll shine-card bg-white dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60 rounded-xl p-5">
+            <div class="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-4">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+            <h4 class="font-bold text-slate-900 dark:text-white text-sm mb-1">2. AI Can Make Mistakes</h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Our AI tools generate study materials fast, but AI can sometimes make mistakes or give wrong answers. Please double-check important info before exams.
+            </p>
+        </div>
+
+        <div class="fade-in-scroll shine-card bg-white dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60 rounded-xl p-5">
+            <div class="w-8 h-8 rounded-lg bg-cyan-50 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center mb-4">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </div>
+            <h4 class="font-bold text-slate-900 dark:text-white text-sm mb-1">3. Your Content</h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                You are fully responsible for the texts, PDFs, or YouTube links you upload. Please ensure your files do not violate anyone's privacy or copyrights.
+            </p>
+        </div>
+
+        <div class="fade-in-scroll shine-card bg-white dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60 rounded-xl p-5">
+            <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-4">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                  d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 1.5H9m3 0h3"/></svg>
+            </div>
+            <h4 class="font-bold text-slate-900 dark:text-white text-sm mb-1">4. Fair Use & Platform</h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Our platform is free for everyone. We can limit excessive usage or modify our features anytime to keep the server smooth and stable for all students.
+            </p>
+        </div>
+    </div>
+</section>
+
+        <footer class="shine-footer border-t border-slate-200/60 dark:border-slate-800/40 bg-white/60 dark:bg-slate-950/40 backdrop-blur-sm relative z-10">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 md:pt-16 pb-6 sm:pb-8">
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-5 sm:gap-8 pb-10 sm:pb-12 border-b border-slate-900/10 dark:border-white/10">
+
+                <div class="col-span-2 md:col-span-2">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center">
+                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4L2 9l10 5 10-5-10-5z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 11v4c0 2.5 3 4 6 4s6-1.5 6-4v-4"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20 9v7"/>
+                            </svg>
+                        </div>
+                        <span class="font-display font-bold text-base text-slate-900 dark:text-white tracking-tight">
+                            StudySuite<span class="text-indigo-600 dark:text-indigo-400">AI</span>
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm">
+                        Making exam preparation simple, fast, and 100% free. Create custom quizzes, practice sheets, and structured smart timetables in under 30 seconds.
+                    </p>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-4">AI Study Tools</h5>
+                    <ul class="space-y-2.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <li><a href="/quiz-generator/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Quiz Generator</a></li>
+                        <li><a href="{% url 'question_generator' %}" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Question Generator</a></li>
+                        <li><a href="/study-planner/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">AI Study Planner</a></li>
+                        <li><a href="/plans/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">History</a></li>
+
+                    </ul>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-4">Platform</h5>
+                    <ul class="space-y-2.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <li><a href="#features" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Our Features</a></li>
+                        <li><a href="#about" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">About Us</a></li>
+                        <li><a href="#terms" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Terms & Rules</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 text-xs font-medium text-slate-400">
+                <div class="flex items-center gap-2">
+                    <p>&copy; 2026 StudySuite AI • All rights reserved.</p>
+                </div>
+            </div>
+
+        </div>
+    </footer>
+    </div>
+
+    <script>
+        {% if user.is_authenticated %}
+function loadAttempts() {
+    fetch('/api/remaining/')
+        .then(r => r.json())
+        .then(data => {
+            const count = document.getElementById('attemptsCount');
+            const reset = document.getElementById('attemptsReset');
+            if (!count || !reset) return;
+
+            const rem = data.daily_remaining;
+            const total = data.daily_limit;
+            const hours = data.hours_until_reset;
+
+            // Hours aur Minutes calculate karne ke liye
+            const hrs = Math.floor(hours);
+            const mins = Math.round((hours - hrs) * 60);
+
+            count.textContent = rem + ' / ' + total;
+            // Updated line
+            let timeText = '';
+if (hrs === 0 && mins === 0) {
+    timeText = 'Resetting Now...';
+} else if (hrs === 0) {
+    timeText = `${mins}m Left`;
+} else {
+    timeText = `${hrs}h ${mins}m Left`;
+}
+reset.innerHTML = `Attempts Reset At Midnight<br>${timeText}`;
+        })
+        .catch(() => {
+            const count = document.getElementById('attemptsCount');
+            const reset = document.getElementById('attemptsReset');
+            if (count) count.textContent = '--/--';
+            if (reset) reset.textContent = 'Could not load';
+        });
+}
+loadAttempts();
+{% endif %}
+
+        // ── HIDDEN LOADING REVEAL PIPELINE ──
+        let _revealed = false;
+
+function revealPage() {
+    if (_revealed) return;
+    _revealed = true;
+
+    const skeleton = document.getElementById('skeleton-loader');
+    const content  = document.getElementById('main-content');
+    if (!skeleton || !content) return;
+
+    // Skeleton smoothly fade out
+    skeleton.style.transition = 'opacity 0.4s ease';
+    skeleton.style.opacity = '0';
+
+    setTimeout(function() {
+        skeleton.style.display = 'none';
+        content.style.display = 'block';
+        window.dispatchEvent(new Event('resize'));
+    }, 400);
+}
+
+// Sab kuch load hone ke baad + fonts ready hone ke baad reveal
+window.addEventListener('load', function() {
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(revealPage);
+    } else {
+        revealPage();
+    }
+});
+
+// Fallback — agar 8 second mein kuch nahi hua (slow net / timeout)
+// toh bhi page show karo, skeleton pe atak mat jao
+setTimeout(revealPage, 8000);
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+            html.classList.toggle('dark', !isDark);
+            localStorage.theme = isDark ? 'light' : 'dark';
+        }
+
+        // ── SCROLL OBSERVER RUNTIME ──
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    e.target.classList.add('visible');
+                    observer.unobserve(e.target);
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -20px 0px' });
+
+        document.querySelectorAll('.fade-in-scroll').forEach(el => observer.observe(el));
+
+        // ── PROGRESS BAR ANIMATION PIPELINE ──
+        const progressObserver = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    const bars = e.target.querySelectorAll('.progress-fill');
+                    bars.forEach(bar => {
+                        const widthStr = bar.style.width;
+                        bar.style.width = '0%';
+                        setTimeout(() => { bar.style.width = widthStr; }, 150);
+                    });
+                    progressObserver.unobserve(e.target);
+                }
+            });
+        }, { threshold: 0.2 });
+
+        document.querySelectorAll('.tool-card').forEach(el => progressObserver.observe(el));
+
+        // ── PROFILE DROPDOWN ──
+    function toggleProfile() {
+    const dropdown = document.getElementById('profileDropdown');
+    const isOpen = dropdown.classList.contains('dropdown-open');
+    if (isOpen) {
+        dropdown.classList.replace('dropdown-open', 'dropdown-closed');
+    } else {
+        dropdown.classList.replace('dropdown-closed', 'dropdown-open');
+    }
+}
+
+document.addEventListener('click', function(e) {
+    const menu = document.getElementById('profileMenu');
+    const dropdown = document.getElementById('profileDropdown');
+    if (menu && !menu.contains(e.target)) {
+        dropdown.classList.replace('dropdown-open', 'dropdown-closed');
+    }
+});
+    </script>
+</body>
+</html>
