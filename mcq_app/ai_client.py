@@ -5,11 +5,14 @@ from google import genai
 
 load_dotenv()
 
-_api_key = os.getenv("GEMINI_API_KEY")
-if not _api_key:
-    raise ValueError("GEMINI_API_KEY is not set in .env!")
+_api_key = os.getenv("GEMINI_API_KEY", "")
 
-client = genai.Client(api_key=_api_key)
+# App crash nahi hoga, bas Client create tab hoga jab key available ho
+if _api_key:
+    client = genai.Client(api_key=_api_key)
+else:
+    client = None
+    print("Warning: GEMINI_API_KEY is not set in environment variables.")
 
 MODELS_TO_TRY = [
     'gemini-3.6-flash',
@@ -43,9 +46,7 @@ def call_with_retry(contents, config=None, max_retries=2):
                 ])
 
                 if is_quota:
-                    raise Exception(
-                        "Daily limit reached. Please try again tomorrow."
-                    )
+                    break
 
                 if is_retryable and attempt < max_retries - 1:
                     time.sleep((attempt + 1) * 2)
