@@ -282,3 +282,7 @@ SITE_URL = os.getenv('SITE_URL', 'https://thestudysuiteai.up.railway.app')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://thestudysuiteai.up.railway.app',
+]

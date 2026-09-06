@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
 from .models import UserLoginLog
+import threading
 
 site_url = getattr(settings, 'SITE_URL', 'http://localhost:8000')
 
@@ -140,14 +141,20 @@ def log_login(sender, request, user, **kwargs):
             </div>
             """
 
-        send_mail(
-            subject=subject,
-            message=f'You have signed in to StudySuite AI. Email: {email}',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[email],
-            html_message=message_html,
-            fail_silently=True,
-        )
+        def _send_email():
+            try:
+                send_mail(
+                    subject=subject,
+                    message=f'You have signed in to StudySuite AI. Email: {email}',
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email],
+                    html_message=message_html,
+                    fail_silently=True,
+                )
+            except Exception:
+                pass
+
+        threading.Thread(target=_send_email, daemon=True).start()
     except Exception:
         pass
 
