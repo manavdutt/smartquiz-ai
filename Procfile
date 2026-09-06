@@ -1,1 +1,1 @@
-web: gunicorn smartquiz_project.wsgi:application
+web: gunicorn smartquiz_project.wsgi:application --timeout 120 --workers 2
