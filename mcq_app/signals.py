@@ -1,10 +1,10 @@
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.dispatch import receiver
 from django.utils import timezone
-from django.core.mail import send_mail
 from django.conf import settings
 from .models import UserLoginLog
 import threading
+import resend
 
 site_url = getattr(settings, 'SITE_URL', 'http://localhost:8000')
 
@@ -143,14 +143,13 @@ def log_login(sender, request, user, **kwargs):
 
         def _send_email():
             try:
-                send_mail(
-                    subject=subject,
-                    message=f'You have signed in to StudySuite AI. Email: {email}',
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[email],
-                    html_message=message_html,
-                    fail_silently=True,
-                )
+                resend.api_key = settings.RESEND_API_KEY
+                resend.Emails.send({
+                    "from": "StudySuite AI <onboarding@resend.dev>",
+                    "to": [email],
+                    "subject": subject,
+                    "html": message_html,
+                })
             except Exception:
                 pass
 

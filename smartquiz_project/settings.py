@@ -269,15 +269,9 @@ CSRF_COOKIE_SECURE = not DEBUG
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Email Settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_TIMEOUT = 10
-EMAIL_HOST = 'smtp.resend.com'
-EMAIL_PORT = 465
-EMAIL_USE_TLS = False
-EMAIL_USE_SSL = True
-EMAIL_HOST_USER = 'resend'
-EMAIL_HOST_PASSWORD = os.getenv('RESEND_API_KEY', '')
-DEFAULT_FROM_EMAIL = 'StudySuite AI <onboarding@resend.dev>'
+# Email Settings
+EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
+RESEND_API_KEY = os.getenv('RESEND_API_KEY', '')
 
 
 SITE_URL = os.getenv('SITE_URL', 'https://thestudysuiteai.up.railway.app')
