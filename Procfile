@@ -1,0 +1,1 @@
+web: gunicorn smartquiz_project.wsgi:application
