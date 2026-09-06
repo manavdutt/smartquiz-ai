@@ -1,1 +1,1 @@
-web: gunicorn smartquiz_project.wsgi:application --timeout 120 --workers 2
+web: python manage.py createcachetable && gunicorn smartquiz_project.wsgi:application --timeout 120 --workers 2
