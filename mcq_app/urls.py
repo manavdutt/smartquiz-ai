@@ -1,5 +1,12 @@
 from django.urls import path
 from . import views
+from django.contrib.sitemaps.views import sitemap
+from django.views.generic import TemplateView
+from .sitemaps import StaticViewSitemap
+
+sitemaps = {
+    'static': StaticViewSitemap,
+}
 
 urlpatterns = [
     path('', views.index, name='index'),  # Landing page
@@ -16,4 +23,9 @@ urlpatterns = [
     path('study-plan/<int:plan_id>/update-date/', views.update_exam_date, name='update_exam_date'),
     path('logout/', views.custom_logout, name='custom_logout'),
     path('api/remaining/', views.get_remaining_attempts, name='remaining_attempts'),
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
+    path('robots.txt', TemplateView.as_view(
+        template_name='robots.txt',
+        content_type='text/plain'
+    ), name='robots'),
 ]

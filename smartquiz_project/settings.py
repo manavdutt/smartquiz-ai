@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sitemaps',
     'django.contrib.sites',  # ← NAYA: allauth ke liye zaroori
     'allauth',  # ← NAYA
     'allauth.account',  # ← NAYA
@@ -272,7 +273,6 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # Email Settings
 EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
 RESEND_API_KEY = os.getenv('RESEND_API_KEY', '')
-
 
 SITE_URL = os.getenv('SITE_URL', 'https://thestudysuiteai.up.railway.app')
 
