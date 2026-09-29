@@ -421,7 +421,7 @@ def index(request):
 #  QUESTION GENERATOR (Non-MCQ Types)
 # ─────────────────────────────────────────
 def question_generator(request):
-    if request.method == 'GET':
+    if request.method in ('GET', 'HEAD'):
         return render(request, 'mcq_app/questions.html')
 
     is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -579,7 +579,7 @@ def question_set_detail(request, set_id):
 
 
 def study_planner(request):
-    if request.method == 'GET':
+    if request.method in ('GET', 'HEAD'):
         import datetime
         return render(request, 'mcq_app/study_planner.html', {
             'today_date': datetime.date.today().isoformat()
