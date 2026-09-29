@@ -8,6 +8,15 @@
     <link rel="icon" type="image/png" href="{% static 'favicon.png' %}">
     <title>AI Study Planner - StudySuite AI</title>
     <meta name="description" content="AI study planner that builds a personalized daily schedule from your syllabus and exam date. Free for students. Upload PDF or paste topics.">
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-433TDL0JZR"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-433TDL0JZR');
+</script>
     <script>
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');

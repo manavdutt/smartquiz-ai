@@ -8,6 +8,15 @@
     <link rel="icon" type="image/png" href="{% static 'favicon.png' %}">
     <title>AI Question Generator - StudySuite AI</title>
     <meta name="description" content="Create fill-in-the-blank, one-word and short answer questions using AI. Upload syllabus or paste text — free question generator for students.">
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-433TDL0JZR"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-433TDL0JZR');
+</script>
     <script>
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
